@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use DMS, please cite the paper below."
+title: "DMS: Debris disks around Main-sequence Stars"
+type: software
+version: 2.0.0
+authors:
+  - family-names: Kim
+    given-names: Minjae G.
+preferred-citation:
+  type: article
+  title: "Impact of planetesimal eccentricities and material strength on the appearance of eccentric debris disks"
+  authors:
+    - family-names: Kim
+      given-names: M.
+    - family-names: Wolf
+      given-names: S.
+    - family-names: Löhne
+      given-names: T.
+    - family-names: Kirchschlager
+      given-names: F.
+    - family-names: Krivov
+      given-names: A. V.
+  journal: "Astronomy & Astrophysics"
+  volume: 618
+  start: A38
+  year: 2018
+  doi: "10.1051/0004-6361/201833061"

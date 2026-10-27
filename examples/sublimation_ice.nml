@@ -1,0 +1,27 @@
+! DMS example: ice/silicate grains that lose their ice inside the sublimation radius
+! (Kim et al. 2019 optical data): the residue is porous silicate; SED only
+!   bin/dms examples/sublimation_ice.nml
+
+&run
+  mode = 'sed',  emission = 'both',  output_name = 'sublimation'
+/
+&star
+  teff = 8590.,  radius = 1.84,  mass = 1.92,  distance = 7.7
+/
+&disk
+  density_law = 'powerlaw',  alpha = 1.0,  r_in = 3.,  r_out = 150.
+  opening_angle = 5.,  dust_mass = 1.0e-7,  inclination = 0.
+/
+&wavelengths
+  lambda_min = 1.0,  lambda_max = 1000.,  n_lambda = 120
+/
+&dust
+  n_components = 2
+  optical_data = 'kim2019/ice_astrosilicate_MG/Sil50cice50',  'kim2019/porous_astrosilicate/as50vac50'
+  bulk_density = 1.95,  1.75
+  abundance    = 100.,  0.             ! the porous silicate only forms by sublimation
+  a_min = 1.0,  a_max = 1000.,  q = 3.5,  n_sizes = 100
+  sublimation = .true.
+  t_sublimation       = 110.,  -1.     ! component 1 sublimates at 110 K, component 2 never
+  sublimation_residue = 2,     0       ! component 1 becomes component 2
+/

@@ -1,0 +1,41 @@
+# build products
+build/
+bin/
+*.o
+*.mod
+*.a
+*.so
+*.pyd
+*.dylib
+python/build_f2py/
+python/*.egg-info/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# run products (created in the working directory)
+results/
+cache/
+*.miex
+queue/
+runs/
+debug_run.log
+
+# LaTeX intermediate files of the manual
+docs/manual/*.aux
+docs/manual/*.log
+docs/manual/*.out
+docs/manual/*.toc
+
+# editors / OS
+*~
+*.swp
+*.bak*
+*.before_update
+.DS_Store
+.vscode/
+.idea/
+
+# images computed for the cover of the manual
+docs/manual/cover/out/
+/quickstart.png

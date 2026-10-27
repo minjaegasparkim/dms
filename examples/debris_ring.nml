@@ -1,0 +1,61 @@
+! DMS example: a single debris ring around a solar-type star (images + SED)
+! Run from the repository root:   bin/dms examples/debris_ring.nml
+! All lengths in au, angles in degrees, masses in M_sun, grain radii in micron.
+
+&run
+  mode          = 'both'            ! 'image', 'sed' or 'both' (images + SED from the images)
+  emission      = 'both'            ! 'thermal', 'scattering', 'both', 'polarisation'
+  output_format = 'fits'            ! 'ascii', 'fits', 'both'
+  output_name   = 'ring'            ! appended to all file names
+  load_optics   = .true.            ! re-use cached Mie results if they match
+  save_optics   = .true.            ! cache the Mie results
+  optics_cache_name = 'astrosil_1-1000_n100'
+/
+
+&star
+  spectrum = 'blackbody'
+  teff     = 5800.
+  radius   = 1.0                    ! R_sun
+  mass     = 1.0                    ! M_sun
+  distance = 20.0                   ! pc
+/
+
+&disk
+  density_law = 'powerlaw'
+  alpha       = 1.0                 ! n ~ a^-alpha
+  r_in        = 50.
+  r_out       = 100.
+  vertical    = 'wedge'
+  opening_angle = 5.0               ! half opening angle
+  dust_mass   = 1.0e-8              ! M_sun
+  inclination = 60.
+  position_angle = 30.
+/
+
+&image
+  n_pixels    = 201
+  max_delta_t = 2.0
+  n_split_max = 3
+  add_star    = .false.
+/
+
+&wavelengths
+  lambda = 1.6, 24., 70., 870.
+/
+
+&dust
+  n_components = 1
+  optical_data = 'astrosilicate_draine03_862'
+  bulk_density = 3.5
+  size_distribution = 'powerlaw'
+  a_min = 1.0
+  a_max = 1000.
+  q     = 3.5
+  n_sizes = 100                  ! >= ~30 bins per decade for smooth Mie polarisation
+  blowout = .true.
+/
+
+&scattering
+  n_angles = 181
+  phase_function = 'mie'
+/

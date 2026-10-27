@@ -1,0 +1,30 @@
+! DMS example: user-defined density (src/user_density.f90): ring with an azimuthal clump
+!   bin/dms examples/clump_user_density.nml
+! The default user_density_fn is  n = (a/au)^-p1 * [1 + p2 exp(-dpsi^2 / 2 p4^2)],
+! with the clump at disk azimuth p3 (deg, from the line of nodes towards the far side).
+
+&run
+  mode = 'image',  emission = 'thermal',  output_format = 'fits',  output_name = 'clump'
+  load_optics = .true.,  save_optics = .true.,  optics_cache_name = 'astrosil_1-1000_mm'
+/
+&star
+  teff = 5800.,  radius = 1.0,  mass = 1.0,  distance = 10.
+/
+&disk
+  density_law = 'user'
+  user_par    = 1.0, 3.0, 45.0, 15.0        ! p1 = alpha, p2 = clump amplitude, p3 = azimuth, p4 = width
+  r_in = 40.,  r_out = 60.
+  opening_angle = 3.,  dust_mass = 1.0e-8,  inclination = 30.,  position_angle = 0.
+/
+&image
+  n_pixels = 201,  max_delta_t = 2.0,  n_split_max = 3
+  psf = 'gaussian',  psf_fwhm = 0.3                ! e.g. ALMA beam [arcsec]
+  image_unit = 'mJy/arcsec2'
+/
+&wavelengths
+  lambda = 870., 1300.
+/
+&dust
+  n_components = 1,  optical_data = 'astrosilicate_draine03_862',  bulk_density = 3.5
+  a_min = 1.0,  a_max = 1000.,  q = 3.5,  n_sizes = 100
+/

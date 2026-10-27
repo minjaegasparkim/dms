@@ -1,0 +1,31 @@
+! DMS example: eccentric ring (e = 0.3) seen face-on, Fomalhaut-like geometry
+! Shows pericentre glow in thermal emission (dust closer to the star is warmer). At 870 micron the
+! apocentre is brighter in the flux integrated across the ring (more dust per unit length along the
+! ring: apocentre glow), while the peak surface brightness of this resolved ring is still higher at
+! pericentre. To see apocentre glow in the image, add psf = 'gaussian', psf_fwhm = 3. to &image.
+!   bin/dms examples/eccentric_ring.nml
+
+&run
+  mode = 'image',  emission = 'both',  output_format = 'fits',  output_name = 'eccentric'
+  load_optics = .true.,  save_optics = .true.,  optics_cache_name = 'astrosil_eccentric'
+/
+&star
+  teff = 8590.,  radius = 1.84,  mass = 1.92,  distance = 7.7
+/
+&disk
+  density_law = 'powerlaw',  alpha = 0.
+  r_in = 130.,  r_out = 145.                ! semi-major axes [au]
+  eccentricity = 0.3,  omega = 0.           ! pericentre along +Y (image +y for PA = 0)
+  opening_angle = 2.,  dust_mass = 5.0e-8
+  inclination = 0.,  position_angle = 0.
+/
+&image
+  n_pixels = 201,  n_split_max = 3
+/
+&wavelengths
+  lambda = 24., 870.
+/
+&dust
+  n_components = 1,  optical_data = 'astrosilicate_draine03_862',  bulk_density = 3.5
+  a_min = 1.0,  a_max = 1000.,  q = 3.5,  n_sizes = 100
+/

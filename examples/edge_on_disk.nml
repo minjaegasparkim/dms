@@ -1,0 +1,29 @@
+! DMS example: edge-on debris disk in scattered light (beta Pic-like geometry, simplified)
+! Forward scattering makes the near side of the disk brighter; the scattered light is polarised
+! perpendicular to the disk plane (Q_phi > 0).
+!   bin/dms examples/edge_on_disk.nml
+
+&run
+  mode = 'image',  emission = 'polarisation',  output_format = 'fits',  output_name = 'edge_on'
+  load_optics = .true.,  save_optics = .true.,  optics_cache_name = 'astrosil_edge_on'
+/
+&star
+  teff = 8000.,  radius = 1.5,  mass = 1.75,  distance = 19.4
+/
+&disk
+  density_law = 'broken',  alpha = 5.,  alpha_out = -3.,  r_c = 80.
+  r_in = 20.,  r_out = 200.
+  vertical = 'gaussian',  h_over_r = 0.05
+  dust_mass = 1.0e-8,  inclination = 88.,  position_angle = 30.
+/
+&image
+  n_pixels = 201,  n_split_max = 3
+  psf = 'diffraction',  telescope_diameter = 8.2,  mask_radius = 0.2
+/
+&wavelengths
+  lambda = 1.65
+/
+&dust
+  n_components = 1,  optical_data = 'astrosilicate_draine03_862',  bulk_density = 3.5
+  a_min = 1.0,  a_max = 1000.,  q = 3.5,  n_sizes = 100   ! smooth Mie polarisation
+/

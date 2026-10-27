@@ -1,0 +1,40 @@
+! DMS example: warm inner belt + eccentric cold outer belt with a Gaussian vertical structure
+!   bin/dms examples/two_belts.nml
+
+&run
+  mode = 'image',  emission = 'both',  output_format = 'fits',  output_name = 'two_belts'
+  load_optics = .true.,  save_optics = .true.,  optics_cache_name = 'astrosil_1-1000'
+/
+&star
+  spectrum = 'blackbody',  teff = 8590.,  radius = 1.84,  mass = 1.92,  distance = 7.7
+/
+&disk
+  n_belts = 2
+  !                    belt 1 (warm)   belt 2 (cold)
+  density_law        = 'powerlaw',     'gaussian'
+  alpha              = 0.0,            0.0          ! for 'gaussian': n ~ a^alpha exp(-(a-mu)^2/2sigma^2)
+  mu                 = 0.0,            140.
+  sigma              = 0.0,            8.
+  r_in               = 5.,             110.
+  r_out              = 12.,            170.
+  eccentricity       = 0.0,            0.12
+  omega              = 0.0,            40.
+  belt_mass_fraction = 0.05,           0.95
+  vertical  = 'gaussian'
+  h_over_r  = 0.03
+  dust_mass = 1.0e-7
+  inclination = 66.,  position_angle = 156.
+/
+&image
+  n_pixels = 301,  max_delta_t = 2.0,  n_split_max = 3
+/
+&wavelengths
+  lambda = 24., 70., 870.
+/
+&dust
+  n_components = 1,  optical_data = 'astrosilicate_draine03_862',  bulk_density = 3.5
+  size_distribution = 'powerlaw',  a_min = 1.0,  a_max = 1000.,  q = 3.5,  n_sizes = 100
+/
+&scattering
+  n_angles = 181,  phase_function = 'mie'
+/

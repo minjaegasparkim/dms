@@ -1,0 +1,21 @@
+# Python package of DMS. Build the compiled extension first (in the repository root):
+#     make python
+# then install the package (editable install keeps it next to the repository data):
+#     pip install -e python
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dms-debris"
+version = "2.0.0"
+description = "DMS: thermal emission, scattered light and polarisation of debris disks (Fortran core with Python interface)"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.22"]
+optional-dependencies = { fits = ["astropy"], plot = ["matplotlib"] }
+
+[tool.setuptools]
+packages = ["dms"]
+
+[tool.setuptools.package-data]
+dms = ["_dms*.so", "_dms*.pyd"]

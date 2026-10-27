@@ -1,0 +1,33 @@
+! DMS example: scattered light and polarisation with a two-component Henyey-Greenstein phase
+! function, simulated SPHERE-like observation (diffraction-limited PSF of an 8.2 m telescope,
+! coronagraphic mask of 0.1 arcsec), Q_phi / U_phi images
+!   bin/dms examples/polarisation_hg.nml
+
+&run
+  mode = 'image',  emission = 'polarisation',  output_format = 'fits',  output_name = 'pol_hg'
+/
+&star
+  teff = 6500.,  radius = 1.4,  mass = 1.3,  distance = 50.
+/
+&disk
+  density_law = 'broken',  alpha = 10.,  alpha_out = -4.,  r_c = 70.
+  r_in = 40.,  r_out = 140.
+  vertical = 'gaussian',  h_over_r = 0.04
+  dust_mass = 1.0e-8,  inclination = 75.,  position_angle = 20.
+/
+&image
+  n_pixels = 201,  n_split_max = 3
+  psf = 'diffraction',  telescope_diameter = 8.2
+  mask_radius = 0.1
+  image_unit = 'mJy/arcsec2'
+/
+&wavelengths
+  lambda = 1.25, 1.65
+/
+&dust
+  n_components = 1,  optical_data = 'astrosilicate_draine03_862',  bulk_density = 3.5
+  a_min = 1.0,  a_max = 1000.,  q = 3.5,  n_sizes = 100
+/
+&scattering
+  phase_function = 'hg2',  g1 = 0.8,  g2 = -0.2,  w = 0.75,  p_max = 0.5
+/
