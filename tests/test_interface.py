@@ -113,3 +113,17 @@ def test_default_number_of_size_bins():
     del m.params["dust"]["n_sizes"]
     res = m.run()
     assert len(res.grains["a"]) == 100
+
+
+@requires_dms
+@pytest.mark.skipif(not os.environ.get("DMS_TEST_SLOW"), reason="about two minutes; set DMS_TEST_SLOW=1")
+def test_two_belts_observed_example(tmp_path):
+    """examples/two_belts_observed.py (Example 2 of the README) runs and writes its figure."""
+    pytest.importorskip("matplotlib")
+    script = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "examples",
+                          "two_belts_observed.py")
+    env = dict(os.environ, MPLBACKEND="Agg")
+    p = subprocess.run([sys.executable, script], cwd=tmp_path, capture_output=True, text=True, env=env)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "blow-out threshold       beta >= 0.44 ... 0.50" in p.stdout
+    assert (tmp_path / "two_belts_observed.png").is_file()

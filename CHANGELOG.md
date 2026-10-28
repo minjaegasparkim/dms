@@ -16,6 +16,12 @@
   CI now installs matplotlib for this test).
 - README rewritten as the front page of the repository: images, the Python example, installation,
   command-line use, table of examples.
+- **Second Python example** (`examples/two_belts_observed.py`, about two minutes): a warm inner and
+  a cold eccentric outer belt, ice–silicate grains that lose their ice above 110 K, blow-out for
+  release at pericentre, Q_φ at 1.6 µm with a PSF and a coronagraph mask, thermal images at 24
+  and 870 µm with a PSF, grain temperatures and vertical optical depth; figure
+  `docs/images/two_belts_observed.png`. Shown in the README (Example 2), `docs/python.md` and the
+  manual. `test_two_belts_observed_example` runs it when `DMS_TEST_SLOW=1` (set in the CI).
 - **Default number of size bins raised from 30 to 100** (`n_sizes`, `input_setup.f90`). Each size
   bin is represented by one grain size, so with 30 bins for 1–1000 µm (10 per decade) the thermal
   SED ripples with the period of the size grid at 100–2000 µm: up to 29 % from a 400-bin

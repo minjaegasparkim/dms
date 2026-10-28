@@ -13,6 +13,10 @@ Without `pip install`, add the `python/` directory to `sys.path` or `PYTHONPATH`
 
 [examples/quickstart.py](../examples/quickstart.py) defines a model directly in Python (no input
 file) and computes an SED and two images in about ten seconds; the README shows it step by step.
+[examples/two_belts_observed.py](../examples/two_belts_observed.py) is a more complete example
+(about two minutes): two belts, one of them eccentric, icy grains that sublimate near the star,
+blow-out for release at pericentre, a polarised-light image with a PSF and a coronagraph mask,
+thermal images with a PSF, grain temperatures and the vertical optical depth.
 
 ## Running a model
 

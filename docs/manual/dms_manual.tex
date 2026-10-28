@@ -1084,7 +1084,7 @@ Path & Content \\
 \code{src/} & Fortran source: modules, routines and the main program \code{dms.f90} \\
 \code{src/user\_density.f90} & user-defined density distribution (edit and recompile) \\
 \code{python/} & Python package \code{dms} and the f2py interface \code{dms\_api.f90} \\
-\code{examples/} & input files showing the main features, and the Python quick start \\
+\code{examples/} & input files showing the main features, and two Python examples \\
 \code{data/optical\_constants/} & optical constants (wavelength [\um], $n$, $k$) \\
 \code{data/stellar\_models/} & model-atmosphere grids (built with \code{python -m dms.stellar}) \\
 \code{docs/} & input reference, outputs, conventions, Python interface, this manual \\
@@ -1370,8 +1370,8 @@ references to cite.
 
 The directory \code{examples/} contains seven input files: \code{debris\_ring}, \code{two\_belts},
 \code{eccentric\_ring}, \code{clump\_user\_density}, \code{polarisation\_hg}, \code{edge\_on\_disk}
-and \code{sublimation\_ice} (all \code{.nml}), and the Python script \code{quickstart.py}
-(Sect.~\ref{sec:python}). Run them from the repository root, e.g.\
+and \code{sublimation\_ice} (all \code{.nml}), and the Python scripts \code{quickstart.py} and
+\code{two\_belts\_observed.py} (Sect.~\ref{sec:python}). Run them from the repository root, e.g.\
 \code{bin/dms examples/two\_belts.nml}. Five of the input files are shown below in shortened form; the files
 contain all parameters with comments.
 
@@ -1574,7 +1574,62 @@ print(sed.f_d)                     # 8.1e-05
 \end{lstlisting}
 
 Parameters that are not given keep their defaults (Sect.~\ref{sec:input}). The script then plots
-the SED and the images at 1.6 and 870\um\ with \code{dms.plot} and writes \code{quickstart.png}.
+the SED and the images at 1.6 and 870\um\ with \code{dms.plot} and writes \code{quickstart.png}
+(Fig.~\ref{fig:quickstart}).
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\textwidth]{../images/quickstart.png}
+\caption{Output of \code{examples/quickstart.py}: SED, scattered light at 1.6\um\ and thermal
+emission at 870\um\ (logarithmic scale, Jy per pixel) of a ring between 50 and 100\,au around a
+Sun-like star at 20\,pc.}
+\label{fig:quickstart}
+\end{figure}
+
+\subsection{A more complete example}
+
+\code{examples/two\_belts\_observed.py} (about two minutes) uses more of the code: a warm inner belt
+(5--15\,au) and a cold eccentric outer belt (Gaussian, peak at 140\,au, $e=0.12$) around an A star
+at 7.7\,pc; grains of silicate and water ice that turn into porous silicate above 110\,K; blow-out
+for release at pericentre; a polarised-light image with a PSF and a coronagraph mask; thermal
+images with a PSF. The dust and the three runs are
+
+\begin{lstlisting}[style=py]
+dust={"n_components": 2,
+      "optical_data": ["kim2019/ice_astrosilicate_MG/Sil50cice50",   # silicate + ice
+                       "kim2019/porous_astrosilicate/as50vac50"],    # residue
+      "bulk_density": [1.95, 1.75], "abundance": [100, 0],
+      "sublimation": True, "t_sublimation": [110, -1], "sublimation_residue": [2, 0],
+      "a_min": 1, "a_max": 1000, "q": 3.5, "blowout_release": "pericentre"}
+
+sed = system.copy().update(run={"mode": "sed"},
+          wavelengths={"lambda_min": 1, "lambda_max": 2000, "n_lambda": 80}).run()
+pol = system.copy().update(run={"mode": "image", "emission": "polarisation"},
+          wavelengths={"lambda": [1.6]},
+          image={"n_pixels": 201, "psf": "gaussian", "psf_fwhm": 0.2, "mask_radius": 2.5}).run()
+th  = system.copy().update(run={"mode": "image", "emission": "thermal"},
+          wavelengths={"lambda": [24, 870]},
+          image={"n_pixels": 201, "psf": "gaussian", "psf_fwhm": [0.8, 0.4]}).run()
+\end{lstlisting}
+
+The blow-out threshold is $\beta\ge0.44$ in the outer belt ($(1-e)/2$) and 0.5 in the inner one;
+icy grains smaller than about 6\um\ are removed. The ice of the remaining grains sublimates inside
+21--27\,au, so the inner belt consists of porous silicate. Figure~\ref{fig:twobelts} shows the
+results; the script also prints $f_\mathrm{d}=1.0\times10^{-4}$, the largest radial optical depth
+($2.8\times10^{-3}$) and the flux densities.
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\textwidth]{../images/two_belts_observed.png}
+\caption{Output of \code{examples/two\_belts\_observed.py}. Top: SED; temperature of the icy grains
+for four sizes (the smallest one left after blow-out, 20, 100 and 1000\um) with the sublimation
+temperature; $Q_\phi$ at 1.6\um\ convolved with a 0.2$''$ PSF, with a coronagraph mask of
+2.5$''$ radius. Bottom: thermal emission at 24\um\ (logarithmic scale) and 870\um\ convolved with
+PSFs of 0.8$''$ and 0.4$''$; vertical optical depth towards pericentre and apocentre of the outer
+belt and its azimuthal mean.}
+\label{fig:twobelts}
+\end{figure}
+\FloatBarrier
 
 \subsection{Running a model}
 

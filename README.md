@@ -23,7 +23,7 @@ the results come back as NumPy arrays.
 DMS was introduced in Kim et al. (2018, A&A 618, A38). A reference manual with the physics and a
 detailed user guide is in [docs/manual/dms_manual.pdf](docs/manual/dms_manual.pdf).
 
-## A first model in Python
+## Example 1: a first model in Python
 
 A ring of dust between 50 and 100 au around a Sun-like star at 20 pc, seen at 60° inclination:
 
@@ -75,12 +75,58 @@ img_model.update(disk={"eccentricity": 0.2, "omega": 45})   # make the ring ecce
 img = img_model.run()
 ```
 
+## Example 2: two belts of icy grains, observed
+
+A warm inner belt (5–15 au) and a cold, eccentric outer belt (Gaussian, peak at 140 au, e = 0.12)
+around an A star at 7.7 pc. The grains are a mixture of astronomical silicate and water ice; where
+they are warmer than 110 K the ice sublimates and porous silicate remains. Grains are removed by
+radiation pressure if they are unbound when released at pericentre. The model is observed in
+polarised light with a coronagraph mask and in thermal emission with a PSF:
+
+```python
+system = dms.Model(
+    star={"teff": 8590, "radius": 1.84, "mass": 1.92, "distance": 7.7},
+    disk={"n_belts": 2,                                   # one value per belt in every list
+          "density_law": ["powerlaw", "gaussian"], "alpha": [1, 0], "mu": [0, 140], "sigma": [0, 8],
+          "r_in": [5, 110], "r_out": [15, 170], "eccentricity": [0, 0.12], "omega": [0, 40],
+          "belt_mass_fraction": [0.02, 0.98], "vertical": "gaussian", "h_over_r": 0.03,
+          "dust_mass": 1e-8, "inclination": 66, "position_angle": 156},
+    dust={"n_components": 2,
+          "optical_data": ["kim2019/ice_astrosilicate_MG/Sil50cice50",     # 50 % silicate, 50 % ice
+                           "kim2019/porous_astrosilicate/as50vac50"],      # residue after sublimation
+          "bulk_density": [1.95, 1.75], "abundance": [100, 0],
+          "sublimation": True, "t_sublimation": [110, -1], "sublimation_residue": [2, 0],
+          "a_min": 1, "a_max": 1000, "q": 3.5, "blowout_release": "pericentre"},
+)
+
+sed = system.copy().update(run={"mode": "sed"},
+                           wavelengths={"lambda_min": 1, "lambda_max": 2000, "n_lambda": 80}).run()
+pol = system.copy().update(run={"mode": "image", "emission": "polarisation"}, wavelengths={"lambda": [1.6]},
+                           image={"n_pixels": 201, "psf": "gaussian", "psf_fwhm": 0.2,
+                                  "mask_radius": 2.5}).run()           # arcsec
+th = system.copy().update(run={"mode": "image", "emission": "thermal"}, wavelengths={"lambda": [24, 870]},
+                          image={"n_pixels": 201, "psf": "gaussian", "psf_fwhm": [0.8, 0.4]}).run()
+
+pol.image("Qphi", observed=True, unit="mJy/arcsec2")   # convolved and masked Q_phi
+sed.temperature["T"]                                   # grain temperatures [distance, component, size]
+sed.tau_profile["pericentre"]                          # vertical optical depth towards pericentre
+sed.blowout_beta                                       # blow-out threshold: (0.44, 0.5)
+```
+
+The complete script, [examples/two_belts_observed.py](examples/two_belts_observed.py), takes about
+two minutes and makes this figure: the SED, the temperatures of the icy grains (grains smaller
+than about 6 µm are blown out; the ice of the others sublimates inside 21–27 au, depending on
+their size), Q_φ at 1.6 µm, the thermal images at 24 and 870 µm, and the vertical optical depth
+of both belts.
+
+<p align="center"><img src="docs/images/two_belts_observed.png" width="100%" alt="SED, grain temperatures, polarised-light image at 1.6 micron, thermal images at 24 and 870 micron and vertical optical depth of the two-belt model"></p>
+
 ## Installation
 
 You need a Fortran compiler with OpenMP (gfortran ≥ 10) and, for Python, NumPy.
 
 ```bash
-git clone https://github.com/YOUR-GITHUB-ID/dms.git
+git clone https://github.com/minjaegasparkim/dms.git
 cd dms
 make                                   # command-line program bin/dms
 make python                            # Python extension (numpy.f2py)
@@ -115,7 +161,8 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 
 | file | what it shows |
 |---|---|
-| [examples/quickstart.py](examples/quickstart.py) | the Python example above |
+| [examples/quickstart.py](examples/quickstart.py) | Example 1 above: a first model in Python |
+| [examples/two_belts_observed.py](examples/two_belts_observed.py) | Example 2 above: two belts, icy grains with sublimation, PSF and coronagraph mask |
 | [examples/debris_ring.nml](examples/debris_ring.nml) | a ring around a solar-type star: images and SED |
 | [examples/eccentric_ring.nml](examples/eccentric_ring.nml) | an eccentric ring (e = 0.3): pericentre and apocentre glow |
 | [examples/two_belts.nml](examples/two_belts.nml) | a warm inner belt and an eccentric cold outer belt |

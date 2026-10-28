@@ -43,5 +43,7 @@ jobs:
           make OPT="-O3" PYTHON=python
           make python OPT="-O3" PYTHON=python
 
-      - name: Test suite
+      - name: Test suite (including the slow example scripts)
+        env:
+          DMS_TEST_SLOW: "1"
         run: python -m pytest tests -v
