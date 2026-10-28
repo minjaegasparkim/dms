@@ -13,7 +13,7 @@ subroutine reading_temperature_dependent_data
   !
   ! The wavelength grid of the optical data ("ri grid") is the union of the wavelengths of all
   ! files, restricted to the range covered by all files; every data set is interpolated onto it
-  ! (linear in log lambda). (Up to 2026-10-25 it was the grid of the first file only, so that a
+  ! (linear in log lambda). (Before this fix it was the grid of the first file only, so that a
   ! finely sampled band of another component, e.g. the 3 micron ice band in an external mixture
   ! listed after a coarsely sampled refractory material, was smoothed.)
   ! The files may have any number of lines; headers and comment lines are skipped.

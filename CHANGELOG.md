@@ -2,7 +2,7 @@
 
 ## 2.0.0 (2026-10) – publication release
 
-### Manual cover, Python quick start and apocentre glow (2026-10-27)
+### Manual cover, Python examples, size bins and apocentre glow
 - **Cover of the manual**: eight images computed with DMS 2.0 (scattered and polarised light of a
   narrow ring, an edge-on disk, two belts at three wavelengths, pericentre and apocentre glow of an
   eccentric ring, a belt with a gap and a ring with a clump) in `docs/manual/cover/images/`. The
@@ -42,7 +42,7 @@
   pericentre at all wavelengths (ratio 0.69 at 870 micron), because the surface density at a given
   semi-major axis does not depend on azimuth. The code was right; only the description changed.
 
-### Blow-out threshold, test suite and CI (2026-10-26)
+### Blow-out threshold, test suite and CI
 - **Blow-out threshold for eccentric belts.** Grains released from a parent body at distance r on an
   orbit with semi-major axis a are unbound for β ≥ r/(2a), i.e. β ≥ 1/2 for circular orbits and
   between (1 − e)/2 (pericentre) and (1 + e)/2 (apocentre) for eccentric ones. New `&dust` inputs:
@@ -69,7 +69,7 @@
   Fortran 2008 support (README, CONTRIBUTING and the manual said "Fortran 2008" without this
   explanation).
 
-### Fix (2026-10-25): wavelength grid of the optical data with several components
+### Fix: wavelength grid of the optical data with several components
 - The optical data of all components were interpolated onto the wavelength grid of the first file.
   A finely sampled band of a later component was smoothed: in external mixtures of a refractory
   material (listed first) and water ice, the 3 micron ice band was degraded for coarsely sampled
@@ -154,7 +154,7 @@
 - The vertical optical-depth profile uses a logarithmic radial grid (400 points), which
   resolves narrow inner belts; it is also kept in memory for Python.
 
-### Examples (2026-10-22)
+### Examples
 - New `examples/eccentric_ring.nml` (e = 0.3 ring, 24 and 870 µm: pericentre glow in the
   mid-infrared, apocentre glow in the millimetre) and `examples/edge_on_disk.nml` (smooth broken
   power law, Gaussian vertical profile, i = 88°, diffraction PSF and mask, polarisation).
@@ -166,7 +166,7 @@
   `two_belts.nml` at other wavelengths, so the optics were recomputed whenever the two were run
   alternately.
 
-### Batch runs: cache size limit and recovery (2026-10-24)
+### Batch runs: cache size limit and recovery
 - A Mie cache file holds all optical-data wavelengths, sizes and angles (100–200 MB). In a large
   grid with few repeated grain populations the auto caches filled the disk. `dms.batch.run` now
   keeps the cache folder below `cache_max_gb` (default 10 GB; command line `--cache-max-gb`),
@@ -176,12 +176,12 @@
 - `requeue --running` (files left in `queue/running/` after an interruption) and
   `requeue --runs RUNS` (done models without a readable `result.json`).
 
-### Water ice at several temperatures (2026-10-23)
+### Water ice at several temperatures
 - `data/optical_constants/mastrapa/temperature/`: amorphous (15–120 K) and crystalline (20–140 K)
   water ice, files as provided, with a README of checks (temperature range of the changes, a step
   in n at 1.29 µm in the crystalline files, comparison with the 50 K files).
 
-### Refractory materials, f_max = 1 (2026-10-23, later)
+### Refractory materials, f_max = 1
 - `data/optical_constants/optool/`: amorphous pyroxene Mg0.7Fe0.3SiO3 (Dorschner et al. 1995),
   amorphous carbon (Zubko et al. 1996), organics (Henning & Stognienko 1996) from optool
   (MIT licence), and a pyroxene + carbon mixture as the DIANA dust (0.87 : 0.13 by mass,
@@ -190,7 +190,7 @@
 - `dhs_fmax = 1` is accepted (was: f_max < 1). The Gauss–Legendre nodes lie inside (0, f_max); the
   thinnest shells (f = 0.987) agree with scattnlay to 1e-10.
 
-### Hollow spheres (DHS) and Mastrapa ice data (2026-10-23)
+### Hollow spheres (DHS) and Mastrapa ice data
 - `grain_shape = 'dhs'` (`&dust`, with `dhs_fmax`, `dhs_nf`): distribution of hollow spheres
   (Min et al. 2005) at all wavelengths (temperatures, β, scattering). New routines in
   `mie_routines.f90`: `coated_ab` (coated sphere, Yang 2003), `q_from_ab`, `mie_amplitudes_grid`
@@ -206,7 +206,7 @@
   joined with the Kim et al. (2019) data outside the measured range.
 - `dms.emc.mix(..., grid_from=i)`: wavelength grid of the result taken from component i.
 
-### Batch runs and composite grains (2026-10-23)
+### Batch runs and composite grains
 - `dms.batch` (Python, also `python -m dms.batch`): input files in a queue folder, several models
   in parallel (one process each), `--watch` to keep picking up new files, `STOP` file,
   done/failed folders, `requeue`; per model `result.json` with the SED, the degree of
@@ -220,7 +220,7 @@
   through ISO_C_BINDING), so parallel runs never read a partly written cache and two runs
   saving the same name do not mix their data.
 
-### Final check before release (2026-10-22)
+### Phase function at θ = 0 and edge-on images of narrow rings
 Clean build, all examples (command line and Python), all sources compiled as one unit with
 strict warnings, documentation links, layout migration. Two problems found and fixed:
 
@@ -245,7 +245,7 @@ Exact semi-analytic check after the fixes (single size, ring at 100 au, 5° open
 edge-on); images within 0.8 % for rings 2 au and 40 au wide; for the 0.1-au ring edge-on the
 images are within 6 % (within 0.1 % at i = 60°).
 
-### Second review (2026-10-22)
+### Blow-out with temperature-dependent data, input checks and packaging
 Additional tests: all sources compiled as one unit (`-Wall -Wextra -Wimplicit-procedure
 -Wconversion-extra`: no argument mismatches between routines, no single-precision constants);
 build and run with gfortran 10.5 and 13.3; eccentric belts against Kepler's laws; PSF convolution
@@ -275,7 +275,7 @@ for wide PSFs); unit conversions; inclination 120° and −60° give the 60° im
 PA + 360°, ω + 360° identical; image SED converges to the direct SED (51 → 401 pixels:
 0.9987 → 1.0001); temperature-dependent data: the nearest data set is used (1e-12).
 
-### Expert review and debugging (2026-10-22)
+### Forward scattering, narrow belts, temperature grid and optically thin check
 Tests: 31 input cases (edge cases and invalid inputs) under AddressSanitizer, UndefinedBehaviorSanitizer,
 `-fcheck=all` and floating-point traps; independent recalculation with miepython and Python; thread
 and repeat consistency. Problems found and fixed:
@@ -290,7 +290,8 @@ and repeat consistency. Problems found and fixed:
   refinement of volume elements (`volume_splitting.f90`) and SED cells (`computing_SED.f90`) near
   the forward direction. Exact semi-analytic check (edge-on ring, x = 393): images within 1.3 %,
   SED within 0.1 %. Optical-property cache format changed (`DMSMIE04`; old caches are recomputed).
-  (The value at θ = 0 and the image accuracy were revised in the final check, see below.)
+  (The value at θ = 0 and the image accuracy were revised later, see "Phase function at θ = 0
+  and edge-on images of narrow rings" above.)
 - **Narrow belts missed (sampling).** A belt narrower than a volume element could lie between all
   nine sample points and be skipped; for an edge-on ring 0.1 au wide the central pixels stayed
   empty. Volume elements overlapping a belt are now split while they are wider than half the belt
@@ -326,8 +327,9 @@ calculation (≤ 0.1 %); β (exact); Stokes Q, U of an inclined, rotated ring vs
   as before (no change for the ring examples).
 - Test with the original `input_image` model (101 pixels, Nmax = 3), thermal flux at 1 / 10 / 100 µm:
   before 1.1e-30 / 0.20 / 7.44 Jy, now 1.15 / 12.5 / 8.03 Jy; direct SED integration 1.14 / 12.7 /
-  8.06 Jy (values after the logarithmic temperature grid of the review below; with the old linear
-  grid the 1-µm value was 1.37 Jy). Run time 1.1 s.
+  8.06 Jy (values after the logarithmic temperature grid, see "Forward scattering, narrow belts,
+  temperature grid and optically thin check" above; with the old linear grid the 1-µm value was
+  1.37 Jy). Run time 1.1 s.
 
 ### Python interface
 - `python/dms_api.f90` (wrapped with numpy.f2py), `python/build_extension.py`, package
