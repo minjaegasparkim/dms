@@ -121,12 +121,64 @@ of both belts.
 
 <p align="center"><img src="docs/images/two_belts_observed.png" width="100%" alt="SED, grain temperatures, polarised-light image at 1.6 micron, thermal images at 24 and 870 micron and vertical optical depth of the two-belt model"></p>
 
+## Example 3: a parameter study with many models in parallel
+
+A grid of models is a set of input files in a queue folder; `dms.batch` runs them several at a
+time and collects the results. Here: how the 3 µm water-ice band appears in the polarisation of a
+nearly edge-on ring, for 3 grain compositions × 2 stars × 2 size distributions (12 models). A
+parameter given in `linked` changes together with an axis, e.g. the radius and mass of each star:
+
+```python
+from dms import batch
+
+base = dms.Model(
+    run={"mode": "image", "emission": "polarisation", "output_format": "ascii"},
+    star={"distance": 10},
+    disk={"r_in": 80, "r_out": 120, "opening_angle": 5, "dust_mass": 1e-8, "inclination": 88},
+    image={"n_pixels": 61, "n_split_max": 2},
+    wavelengths={"lambda_min": 2.5, "lambda_max": 3.8, "n_lambda": 27},
+    dust={"n_components": 1, "a_min": 0.1, "a_max": 1000, "n_sizes": 120, "blowout": True},
+)
+jobs = batch.grid(base,
+    {"dust.optical_data": ["kim2019/astrosilicate/astrosilicate_draine2003.txt",
+                           "kim2019/ice_astrosilicate_MG/Sil80cice20",       # 20 % crystalline ice
+                           "kim2019/ice_astrosilicate_MG/Sil50cice50"],      # 50 % crystalline ice
+     "star.teff": [5800, 8590],
+     "dust.q": [3.5, 3.0]},
+    linked={"dust.optical_data": {"dust.bulk_density": [3.5, 3.0, 2.25]},
+            "star.teff": {"star.radius": [1.0, 1.84], "star.mass": [1.0, 1.92]}})
+
+batch.write_queue(jobs, "parameter_study/queue")       # one input file per model
+batch.run("parameter_study/queue", "parameter_study/runs",
+          workers=8, omp_threads=1)                    # 8 models at a time, 1 OpenMP thread each
+rows = batch.collect("parameter_study/runs")           # one dict per model
+batch.dop_at(rows[0], 90)                              # degree of polarisation at 90°, every wavelength
+```
+
+Parallel computing happens on two levels: inside one model DMS uses OpenMP threads
+(`omp_threads`, i.e. `OMP_NUM_THREADS` of each run), and `dms.batch` runs `workers` models at the
+same time as separate processes; `workers × omp_threads` should not exceed the number of cores.
+Many small models run fastest with many workers and one or two threads each, a few large images
+with fewer workers and more threads. Models that differ only in the star or the geometry share
+one Mie calculation, and a stopped study continues where it stopped. The same queue can be run
+from a terminal or on another machine: `python -m dms.batch run queue runs -j 8`.
+
+The complete script, [examples/parameter_study.py](examples/parameter_study.py), takes about
+half a minute on two cores. It prints a table (smallest grain left after blow-out, f_d, degree
+of polarisation at 2.5 and 3.1 µm) and makes this figure: the degree of polarisation at a
+scattering angle of 90° against wavelength for q = 3.5 and 3.0 (solid: G star, dashed: A star),
+and against the scattering angle at 3.1 µm. The ice raises the polarisation in the band from
+about 9 % to 46–68 % for the G star; the A star blows out grains smaller than 3–4.5 µm, and the
+sharp lower edge of the size distribution leaves Mie oscillations in its curves.
+
+<p align="center"><img src="docs/images/parameter_study.png" width="100%" alt="Degree of polarisation against wavelength and scattering angle for the 12 models of the parameter study"></p>
+
 ## Installation
 
 You need a Fortran compiler with OpenMP (gfortran ≥ 10) and, for Python, NumPy.
 
 ```bash
-git clone https://github.com/minjaegasparkim/dms.git
+git clone https://github.com/YOUR-GITHUB-ID/dms.git
 cd dms
 make                                   # command-line program bin/dms
 make python                            # Python extension (numpy.f2py)
@@ -163,6 +215,7 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 |---|---|
 | [examples/quickstart.py](examples/quickstart.py) | Example 1 above: a first model in Python |
 | [examples/two_belts_observed.py](examples/two_belts_observed.py) | Example 2 above: two belts, icy grains with sublimation, PSF and coronagraph mask |
+| [examples/parameter_study.py](examples/parameter_study.py) | Example 3 above: a grid of 12 models run in parallel with `dms.batch` |
 | [examples/debris_ring.nml](examples/debris_ring.nml) | a ring around a solar-type star: images and SED |
 | [examples/eccentric_ring.nml](examples/eccentric_ring.nml) | an eccentric ring (e = 0.3): pericentre and apocentre glow |
 | [examples/two_belts.nml](examples/two_belts.nml) | a warm inner belt and an eccentric cold outer belt |

@@ -127,3 +127,20 @@ def test_two_belts_observed_example(tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     assert "blow-out threshold       beta >= 0.44 ... 0.50" in p.stdout
     assert (tmp_path / "two_belts_observed.png").is_file()
+
+
+@requires_exe
+@requires_dms
+def test_parameter_study_example(tmp_path):
+    """examples/parameter_study.py (Example 3 of the README): 12 models with dms.batch, then a
+    second call that finds all results and computes nothing."""
+    pytest.importorskip("matplotlib")
+    script = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "examples",
+                          "parameter_study.py")
+    env = dict(os.environ, MPLBACKEND="Agg")
+    for expected in ("12 models, 12 to compute", "12 models, 0 to compute"):
+        p = subprocess.run([sys.executable, script], cwd=tmp_path, capture_output=True, text=True, env=env)
+        assert p.returncode == 0, p.stdout + p.stderr
+        assert expected in p.stdout
+    assert "ice50_G_q3.5" in p.stdout
+    assert (tmp_path / "parameter_study.png").is_file()

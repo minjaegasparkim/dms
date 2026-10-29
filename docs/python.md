@@ -17,6 +17,9 @@ file) and computes an SED and two images in about ten seconds; the README shows 
 (about two minutes): two belts, one of them eccentric, icy grains that sublimate near the star,
 blow-out for release at pericentre, a polarised-light image with a PSF and a coronagraph mask,
 thermal images with a PSF, grain temperatures and the vertical optical depth.
+[examples/parameter_study.py](../examples/parameter_study.py) runs a grid of 12 models in parallel
+with `dms.batch` (below): the 3 µm water-ice band in the degree of polarisation for three grain
+compositions, two stars and two size distributions.
 
 ## Running a model
 

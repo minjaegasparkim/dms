@@ -22,6 +22,13 @@
   and 870 µm with a PSF, grain temperatures and vertical optical depth; figure
   `docs/images/two_belts_observed.png`. Shown in the README (Example 2), `docs/python.md` and the
   manual. `test_two_belts_observed_example` runs it when `DMS_TEST_SLOW=1` (set in the CI).
+- **Third Python example** (`examples/parameter_study.py`, about half a minute on two cores): a
+  grid of 12 models (3 grain compositions with 0, 20 and 50 % crystalline ice × G and A star ×
+  q = 3.5, 3.0) run with `dms.batch` (`grid` with `linked` parameters, `write_queue`, `run` with
+  `workers` and `omp_threads`, `collect`, `dop_at`); a second call computes only missing models.
+  Degree of polarisation in the 3 µm ice band against wavelength and scattering angle; figure
+  `docs/images/parameter_study.png`. Shown in the README (Example 3), `docs/python.md` and the
+  manual; tested by `test_parameter_study_example`.
 - **Default number of size bins raised from 30 to 100** (`n_sizes`, `input_setup.f90`). Each size
   bin is represented by one grain size, so with 30 bins for 1–1000 µm (10 per decade) the thermal
   SED ripples with the period of the size grid at 100–2000 µm: up to 29 % from a 400-bin
