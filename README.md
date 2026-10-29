@@ -298,11 +298,6 @@ references given there. See [CITATION.cff](CITATION.cff).
 DMS uses the Mie routine miex (Wolf & Voshchinnikov 2004) and parts of the debris/modim code
 (Ertel et al. 2011, 2012).
 
-## License
-
-The license has not been chosen yet. It must also cover the bundled miex routine
-(`src/mie_routines.f90`, Wolf & Voshchinnikov 2004) and the third-party optical data.
-
 ## Contact
 
 Minjae G. Kim. Bug reports and questions: please open an issue.
