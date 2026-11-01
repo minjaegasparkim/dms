@@ -12,12 +12,15 @@ AU = 149597870700.0
 PC = 648000.0 / np.pi * AU
 LSUN = 3.828e26
 
+# np.trapezoid exists from NumPy 2.0 on; np.trapz in NumPy 1.x
+trapezoid = getattr(np, "trapezoid", None) or np.trapz
+
 
 def thermal_luminosity_ratio(res, distance_pc):
     """Integrated thermal SED divided by the stellar luminosity."""
     nu = C / (res.wavelength * 1e-6)
     order = np.argsort(nu)
-    l_th = 4 * np.pi * (distance_pc * PC) ** 2 * np.trapezoid(res.sed["thermal"][order] * 1e-26, nu[order])
+    l_th = 4 * np.pi * (distance_pc * PC) ** 2 * trapezoid(res.sed["thermal"][order] * 1e-26, nu[order])
     return l_th / (res.luminosity_lsun * LSUN)
 
 

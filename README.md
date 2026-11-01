@@ -23,7 +23,75 @@ the results come back as NumPy arrays.
 DMS was introduced in Kim et al. (2018, A&A 618, A38). A reference manual with the physics and a
 detailed user guide is in [docs/manual/dms_manual.pdf](docs/manual/dms_manual.pdf).
 
-## Example 1: a first model in Python
+## Prerequisites
+
+Install these once, before you download DMS. On every system you need a Fortran compiler with
+OpenMP (gfortran ≥ 10), `make`, and Python ≥ 3.9.
+
+| system | compiler and make |
+|---|---|
+| macOS | `xcode-select --install` (make, C compiler), then [Homebrew](https://brew.sh) and `brew install gcc` (gfortran with OpenMP) |
+| Linux (Debian, Ubuntu) | `sudo apt install gfortran make python3 python3-pip python3-venv` |
+| Linux (Fedora) | `sudo dnf install gcc-gfortran make python3 python3-pip` |
+| Windows | install [WSL](https://learn.microsoft.com/windows/wsl/install) with Ubuntu and follow the Ubuntu line inside it |
+
+Python: any distribution works (Anaconda, Miniforge, python.org, the system Python). A separate
+environment keeps the versions consistent, e.g. `conda create -n dms python=3.12` and
+`conda activate dms`. Then install the Python packages (NumPy ≥ 1.22, meson and ninja, which
+`numpy.f2py` needs with Python ≥ 3.12, matplotlib, astropy, pytest and JupyterLab):
+
+```bash
+python3 -m pip install "numpy>=1.22" meson ninja matplotlib astropy pytest jupyterlab
+```
+
+(the same list is in `requirements.txt` of the repository: `python3 -m pip install -r requirements.txt`).
+
+Use the same Python for `make python`, for Jupyter and for your scripts: the Python extension of
+DMS is compiled for one Python version and only works with that one.
+
+## Installation
+
+```bash
+git clone https://github.com/minjaegasparkim/dms.git
+cd dms
+python3 -m pip install -r requirements.txt     # the Python packages, if not installed yet
+make                                           # the command-line program bin/dms
+make python                                    # the Python extension (numpy.f2py)
+make check                                     # checks everything above and says what is missing
+make test                                      # optional: the test suite, about one minute
+```
+
+`make check` (`tools/check_setup.py`) lists each prerequisite as `ok` or `MISSING`, with the
+command that fixes it. Common problems:
+
+| message | what to do |
+|---|---|
+| `gfortran: command not found` | install the compiler (table above) |
+| `Cannot use distutils backend with Python>=3.12`, then the build stops | `python3 -m pip install meson ninja`, then `make python` |
+| `ImportError: the compiled DMS extension is missing` | run `make python` with the Python you use: `make python PYTHON=$(which python3)` |
+| `module 'numpy' has no attribute ...` | NumPy is too old: `python3 -m pip install --upgrade numpy` |
+
+`pip install -e python` makes `import dms` work from any directory; without it, scripts add the
+`python/` folder of the repository to `sys.path` (the example notebooks do this themselves).
+Intel ifx: `make FC=ifx OMP=-qopenmp` (not tested). The code uses a few Fortran 2003/2008 features
+(`error stop`, `open(newunit=)`, `execute_command_line`, `block`) and is compiled with
+`-std=f2008`.
+
+## Example 0: getting started (Jupyter)
+
+1. In a terminal, in the repository folder, start Jupyter: `jupyter lab`.
+2. In the file browser on the left, open `examples/0_getting_started.ipynb`.
+3. Run the cells one after the other with **Shift + Enter**.
+
+The notebook runs the setup check with the Python of the notebook, imports DMS, computes the SED
+of a small ring (f_d = 8.1e-05) and its image at 70 µm, and lists what to do if a step fails. It
+takes less than a minute. Examples 1–3 are notebooks in the same folder; on GitHub they can be
+read with their results without running them.
+
+Without Jupyter, the command-line program can be tested with an input file:
+`bin/dms examples/debris_ring.nml` (results in `results/`).
+
+## Example 1: a first model
 
 A ring of dust between 50 and 100 au around a Sun-like star at 20 pc, seen at 60° inclination:
 
@@ -60,9 +128,9 @@ dms.plot.image(img, "thermal", il=1, ax=ax[1])
 plt.show()
 ```
 
-This takes about ten seconds. The complete script is
-[examples/quickstart.py](examples/quickstart.py) (`python examples/quickstart.py`); it makes
-this figure:
+This takes about ten seconds. The notebook
+[examples/1_first_model.ipynb](examples/1_first_model.ipynb) contains these steps and makes this
+figure:
 
 <p align="center"><img src="docs/images/quickstart.png" width="100%" alt="SED, scattered-light image at 1.6 micron and thermal image at 870 micron of the quick-start model"></p>
 
@@ -113,8 +181,8 @@ sed.tau_profile["pericentre"]                          # vertical optical depth 
 sed.blowout_beta                                       # blow-out threshold: (0.44, 0.5)
 ```
 
-The complete script, [examples/two_belts_observed.py](examples/two_belts_observed.py), takes about
-two minutes and makes this figure: the SED, the temperatures of the icy grains (grains smaller
+The notebook [examples/2_two_belts_observed.ipynb](examples/2_two_belts_observed.ipynb) takes
+about two minutes and makes this figure: the SED, the temperatures of the icy grains (grains smaller
 than about 6 µm are blown out; the ice of the others sublimates inside 21–27 au, depending on
 their size), Q_φ at 1.6 µm, the thermal images at 24 and 870 µm, and the vertical optical depth
 of both belts.
@@ -163,7 +231,7 @@ with fewer workers and more threads. Models that differ only in the star or the 
 one Mie calculation, and a stopped study continues where it stopped. The same queue can be run
 from a terminal or on another machine: `python -m dms.batch run queue runs -j 8`.
 
-The complete script, [examples/parameter_study.py](examples/parameter_study.py), takes about
+The notebook [examples/3_parameter_study.ipynb](examples/3_parameter_study.ipynb) takes about
 half a minute on two cores. It prints a table (smallest grain left after blow-out, f_d, degree
 of polarisation at 2.5 and 3.1 µm) and makes this figure: the degree of polarisation at a
 scattering angle of 90° against wavelength for q = 3.5 and 3.0 (solid: G star, dashed: A star),
@@ -172,28 +240,6 @@ about 9 % to 46–68 % for the G star; the A star blows out grains smaller than 
 sharp lower edge of the size distribution leaves Mie oscillations in its curves.
 
 <p align="center"><img src="docs/images/parameter_study.png" width="100%" alt="Degree of polarisation against wavelength and scattering angle for the 12 models of the parameter study"></p>
-
-## Installation
-
-You need a Fortran compiler with OpenMP (gfortran ≥ 10) and, for Python, NumPy.
-
-```bash
-git clone https://github.com/YOUR-GITHUB-ID/dms.git
-cd dms
-make                                   # command-line program bin/dms
-make python                            # Python extension (numpy.f2py)
-pip install -e python                  # optional: "import dms" from any directory
-make test                              # optional: test suite, about one minute
-```
-
-- **macOS:** `brew install gcc` provides gfortran.
-- **Linux (Debian/Ubuntu):** `sudo apt install gfortran`.
-- **Python ≥ 3.12:** `numpy.f2py` also needs `pip install meson ninja`.
-- astropy (FITS files) and matplotlib (plots) are optional; pytest is needed for `make test`.
-- Intel ifx: `make FC=ifx OMP=-qopenmp` (not tested).
-
-The code uses a few Fortran 2003/2008 features (`error stop`, `open(newunit=)`,
-`execute_command_line`, `block`) and is compiled with `-std=f2008`.
 
 ## The command-line program
 
@@ -213,9 +259,10 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 
 | file | what it shows |
 |---|---|
-| [examples/quickstart.py](examples/quickstart.py) | Example 1 above: a first model in Python |
-| [examples/two_belts_observed.py](examples/two_belts_observed.py) | Example 2 above: two belts, icy grains with sublimation, PSF and coronagraph mask |
-| [examples/parameter_study.py](examples/parameter_study.py) | Example 3 above: a grid of 12 models run in parallel with `dms.batch` |
+| [examples/0_getting_started.ipynb](examples/0_getting_started.ipynb) | Example 0: check the installation, the first SED and image |
+| [examples/1_first_model.ipynb](examples/1_first_model.ipynb) | Example 1: SED and images of a ring, changing a model |
+| [examples/2_two_belts_observed.ipynb](examples/2_two_belts_observed.ipynb) | Example 2: two belts, icy grains with sublimation, PSF and coronagraph mask |
+| [examples/3_parameter_study.ipynb](examples/3_parameter_study.ipynb) | Example 3: a grid of 12 models run in parallel with `dms.batch` |
 | [examples/debris_ring.nml](examples/debris_ring.nml) | a ring around a solar-type star: images and SED |
 | [examples/eccentric_ring.nml](examples/eccentric_ring.nml) | an eccentric ring (e = 0.3): pericentre and apocentre glow |
 | [examples/two_belts.nml](examples/two_belts.nml) | a warm inner belt and an eccentric cold outer belt |
@@ -254,12 +301,12 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 src/                    Fortran source (modules, routines, main program dms.f90)
 src/user_density.f90    edit this file to define your own density distribution
 python/                 Python package "dms" and the f2py interface (dms_api.f90)
-examples/               input files (namelists) and the Python quick start
+examples/               example notebooks (0–3) and input files (namelists)
 data/optical_constants/ optical constants n, k (wavelength [micron], n, k)
 data/stellar_models/    model-atmosphere grids (created with python -m dms.stellar)
 docs/                   input reference, outputs, conventions, Python interface, manual
 tests/                  test suite (pytest) and reference values of the examples
-tools/                  quick-look plots, optical-constant plots
+tools/                  setup check (check_setup.py), quick-look plots, optical-constant plots
 .github/workflows/      continuous integration (build and tests on every push)
 ```
 
@@ -286,8 +333,8 @@ make test
 
 The suite (`tests/`, about one minute) checks energy conservation, image against SED integration,
 polarisation in limits with known answers, geometry, blow-out, input and error handling, runs the
-Python quick start, and compares all examples with stored reference values. GitHub Actions runs
-it on every push.
+example notebooks 0, 1 and 3 (and 2 with `DMS_TEST_SLOW=1`), and compares all input-file examples
+with stored reference values. GitHub Actions runs it, including notebook 2, on every push.
 
 ## Citing
 
@@ -297,6 +344,11 @@ references given there. See [CITATION.cff](CITATION.cff).
 
 DMS uses the Mie routine miex (Wolf & Voshchinnikov 2004) and parts of the debris/modim code
 (Ertel et al. 2011, 2012).
+
+## License
+
+The license has not been chosen yet. It must also cover the bundled miex routine
+(`src/mie_routines.f90`, Wolf & Voshchinnikov 2004) and the third-party optical data.
 
 ## Contact
 

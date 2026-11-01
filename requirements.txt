@@ -1,0 +1,9 @@
+# Python packages for DMS:   python3 -m pip install -r requirements.txt
+# (the Fortran compiler is installed separately: see README, "Prerequisites")
+numpy>=1.22
+meson            # build backend of numpy.f2py (needed with Python >= 3.12)
+ninja
+matplotlib       # plots and the example notebooks
+astropy          # reading the FITS output
+pytest           # make test
+jupyterlab       # the example notebooks

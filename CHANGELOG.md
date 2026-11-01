@@ -2,6 +2,24 @@
 
 ## 2.0.0 (2026-10) – publication release
 
+### Getting started and example notebooks
+- **Prerequisites and setup check.** `requirements.txt` (NumPy ≥ 1.22, meson, ninja, matplotlib,
+  astropy, pytest, JupyterLab); `tools/check_setup.py` and `make check` list the compiler, `make`,
+  Python, NumPy, meson/ninja, the optional packages, `bin/dms`, the Python extension for the Python
+  that runs the check, and whether `import dms` finds this repository or another installation, and
+  print the command that fixes each missing item (standard library only, so it runs before anything
+  is installed). README and manual start with the prerequisites for macOS, Linux and Windows (WSL)
+  and a table of common build problems.
+- **Example notebooks** `examples/0_getting_started.ipynb` (setup check, first SED and image,
+  troubleshooting), `1_first_model.ipynb`, `2_two_belts_observed.ipynb` and
+  `3_parameter_study.ipynb`, stored with their results so that they can be read on GitHub. They
+  replace the scripts `quickstart.py`, `two_belts_observed.py` and `parameter_study.py`. The
+  notebooks always import DMS from their own repository, so that an older installation elsewhere
+  is not used by mistake. The tests run the code cells of the notebooks in a temporary directory.
+- **NumPy 1.x.** The energy-balance test used `np.trapezoid`, which exists only from NumPy 2.0 on;
+  it now falls back to `np.trapz`, so the test suite runs with NumPy 1.22 and later, as the
+  requirements state.
+
 ### Manual cover, Python examples, size bins and apocentre glow
 - **Cover of the manual**: eight images computed with DMS 2.0 (scattered and polarised light of a
   narrow ring, an edge-on disk, two belts at three wavelengths, pericentre and apocentre glow of an

@@ -6,6 +6,7 @@
 #   make serial       optimised, without OpenMP
 #   make python       Python module (f2py)                    -> python/dms/_dms*.so
 #   make test         build both and run the test suite (needs pytest)
+#   make check        check the prerequisites (compiler, Python packages, built files)
 #   make clean        remove build files
 #
 # Other compilers:  make FC=ifx OMP=-qopenmp
@@ -41,7 +42,7 @@ LIB     = $(BUILD)/libdms.a
 
 FFLAGS  = $(OPT) $(OMP) $(STD) $(PIC) -J$(BUILD)
 
-.PHONY: all debug serial python test clean
+.PHONY: all debug serial python test check clean
 
 all: $(BIN)/dms
 
@@ -84,6 +85,9 @@ python: $(LIB)
 
 test: $(BIN)/dms python
 	$(PYTHON) -m pytest tests -q
+
+check:
+	$(PYTHON) tools/check_setup.py
 
 clean:
 	rm -rf $(BUILD) $(BIN)/dms python/dms/_dms*.so python/build_f2py
