@@ -8,6 +8,8 @@ repository-code: "https://github.com/minjaegasparkim/dms"
 authors:
   - family-names: Kim
     given-names: Minjae G.
+    affiliation: "Mullard Space Science Laboratory, University College London"
+    orcid: "https://orcid.org/0000-0001-6218-2004"
 preferred-citation:
   type: article
   title: "Impact of planetesimal eccentricities and material strength on the appearance of eccentric debris disks"
