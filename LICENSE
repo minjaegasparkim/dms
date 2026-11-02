@@ -1,0 +1,51 @@
+BSD 3-Clause License
+
+Copyright (c) 2018-2026, Minjae G. Kim
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+--------------------------------------------------------------------------------
+Third-party parts that are NOT covered by the licence above
+--------------------------------------------------------------------------------
+
+miex (src/mie_routines.f90: subroutines aa2 and shexqnn2)
+    The Mie routine of miex, S. Wolf & N. V. Voshchinnikov, 2004, Computer
+    Physics Communications 162, 113 (CPC Program Library ADUD_v1_0). It is
+    distributed under the CPC Non-Profit Use Licence
+    (https://www.elsevier.com/about/policies-and-standards/open-access-licenses/elsevier-user/cpc):
+    academic and non-profit use only, no commercial use, no redistribution to
+    third parties without the written permission of the authors. It is included
+    in DMS with the written permission of S. Wolf (November 2026). DMS 2.0
+    allocates its work array with the number of terms needed and removed its
+    saved variables (for OpenMP); the algorithm is unchanged. If you use DMS,
+    please cite Wolf & Voshchinnikov (2004).
+
+Optical data (data/optical_constants/)
+    The optical constants come from the publications listed in
+    data/optical_constants/README.md; please cite them when you use them.
+    The files in data/optical_constants/optool/ are taken from optool and are
+    distributed under its MIT licence (data/optical_constants/optool/LICENSE_optool.txt).

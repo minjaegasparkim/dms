@@ -1,6 +1,14 @@
 !____________________________________________________________________________________________________
 !
-! 8. 8th module :  Mie routines from code miex (Wolf & Voshchinnikov 2004)
+! 8. 8th module :  Mie routines from code miex (Wolf & Voshchinnikov 2004), and the coated-sphere and
+!                  DHS routines of DMS
+!
+! Licence: the subroutines aa2 and shexqnn2 are part of miex (S. Wolf & N. V. Voshchinnikov 2004,
+! Comput. Phys. Commun. 162, 113; CPC Program Library ADUD_v1_0). They are distributed under the
+! CPC Non-Profit Use Licence (academic and non-profit use only) and are included in DMS with the
+! written permission of S. Wolf (November 2026); they are not covered by the BSD licence of DMS
+! (see LICENSE). Please cite Wolf & Voshchinnikov (2004). All other routines of this module were
+! written for DMS and are under the BSD 3-Clause licence of DMS.
 !____________________________________________________________________________________________________
 
 ! ****************************************************************************************************

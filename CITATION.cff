@@ -3,6 +3,8 @@ message: "If you use DMS, please cite the paper below."
 title: "DMS: Debris disks around Main-sequence Stars"
 type: software
 version: 2.0.0
+license: BSD-3-Clause
+repository-code: "https://github.com/minjaegasparkim/dms"
 authors:
   - family-names: Kim
     given-names: Minjae G.
@@ -25,3 +27,17 @@ preferred-citation:
   start: A38
   year: 2018
   doi: "10.1051/0004-6361/201833061"
+references:
+  - type: article
+    title: "Mie scattering by ensembles of particles with very large size parameters"
+    authors:
+      - family-names: Wolf
+        given-names: S.
+      - family-names: Voshchinnikov
+        given-names: N. V.
+    journal: "Computer Physics Communications"
+    volume: 162
+    start: 113
+    year: 2004
+    doi: "10.1016/j.cpc.2004.06.070"
+    notes: "Mie routine of miex (subroutines aa2 and shexqnn2 in src/mie_routines.f90), CPC Non-Profit Use Licence, included with the written permission of S. Wolf"

@@ -18,7 +18,7 @@
 &dust
   n_components = 2
   optical_data = 'kim2019/ice_astrosilicate_MG/Sil50cice50',  'kim2019/porous_astrosilicate/as50vac50'
-  bulk_density = 1.95,  1.75
+  bulk_density = 2.25,  1.75          ! by volume: 0.5 x 3.5 (silicate) + 0.5 x 1.0 (ice); 0.5 x 3.5
   abundance    = 100.,  0.             ! the porous silicate only forms by sublimation
   a_min = 1.0,  a_max = 1000.,  q = 3.5,  n_sizes = 100
   sublimation = .true.

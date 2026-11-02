@@ -162,7 +162,7 @@ system = dms.Model(
     dust={"n_components": 2,
           "optical_data": ["kim2019/ice_astrosilicate_MG/Sil50cice50",     # 50 % silicate, 50 % ice
                            "kim2019/porous_astrosilicate/as50vac50"],      # residue after sublimation
-          "bulk_density": [1.95, 1.75], "abundance": [100, 0],
+          "bulk_density": [2.25, 1.75], "abundance": [100, 0],
           "sublimation": True, "t_sublimation": [110, -1], "sublimation_residue": [2, 0],
           "a_min": 1, "a_max": 1000, "q": 3.5, "blowout_release": "pericentre"},
 )
@@ -183,7 +183,7 @@ sed.blowout_beta                                       # blow-out threshold: (0.
 
 The notebook [examples/2_two_belts_observed.ipynb](examples/2_two_belts_observed.ipynb) takes
 about two minutes and makes this figure: the SED, the temperatures of the icy grains (grains smaller
-than about 6 µm are blown out; the ice of the others sublimates inside 21–27 au, depending on
+than about 5 µm are blown out; the ice of the others sublimates inside 21–27 au, depending on
 their size), Q_φ at 1.6 µm, the thermal images at 24 and 870 µm, and the vertical optical depth
 of both belts.
 
@@ -316,13 +316,12 @@ the working directory. You can change all directories in the input file (`&run`)
 ## Documentation
 
 - [docs/manual/dms_manual.pdf](docs/manual/dms_manual.pdf): reference manual and user guide
-  (physics, numerical methods and use of the code; LaTeX source in the same folder)
+  (physics, numerical methods and use of the code)
 - [docs/python.md](docs/python.md): the Python interface
 - [docs/input_reference.md](docs/input_reference.md): every input parameter, with units and defaults
 - [docs/outputs.md](docs/outputs.md): output files and units
 - [docs/conventions.md](docs/conventions.md): coordinate frames, eccentric belts, polarisation signs
-- [docs/manual/cover/](docs/manual/cover/): the images on the manual cover and the scripts that
-  reproduce them
+- [docs/manual/cover/images/](docs/manual/cover/images/): the images on the manual cover, computed with DMS
 - [CHANGELOG.md](CHANGELOG.md): changes with respect to the 2019 version
 
 ## Tests
@@ -347,8 +346,15 @@ DMS uses the Mie routine miex (Wolf & Voshchinnikov 2004) and parts of the debri
 
 ## License
 
-The license has not been chosen yet. It must also cover the bundled miex routine
-(`src/mie_routines.f90`, Wolf & Voshchinnikov 2004) and the third-party optical data.
+DMS is distributed under the BSD 3-Clause licence ([LICENSE](LICENSE)). Two parts are not covered
+by it:
+
+- the Mie routine of miex (subroutines `aa2` and `shexqnn2` in `src/mie_routines.f90`; Wolf &
+  Voshchinnikov 2004, Comput. Phys. Commun. 162, 113) is distributed under the CPC Non-Profit Use
+  Licence (academic and non-profit use only) and is included with the written permission of
+  S. Wolf;
+- the optical data in `data/optical_constants/` come from the publications listed in its README
+  (please cite them); the files from optool are under its MIT licence.
 
 ## Contact
 

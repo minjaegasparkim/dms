@@ -2,6 +2,21 @@
 
 ## 2.0.0 (2026-10) – publication release
 
+### Licence and release
+- **Licence.** DMS is distributed under the BSD 3-Clause licence (`LICENSE`). The Mie routine of
+  miex (subroutines `aa2` and `shexqnn2` in `src/mie_routines.f90`; Wolf & Voshchinnikov 2004) is
+  under the CPC Non-Profit Use Licence and is included with the written permission of S. Wolf;
+  `LICENSE`, the module header of `src/mie_routines.f90`, the README and the manual
+  ("Citing, licence and acknowledgements") say so. `CITATION.cff` gives the licence, the
+  repository and Wolf & Voshchinnikov (2004) as a reference.
+- **Bulk density of Sil50cice50.** `examples/sublimation_ice.nml` and
+  `examples/2_two_belts_observed.ipynb` used 1.95 g cm⁻³ for the 50 % silicate / 50 % ice mixture;
+  the volume average is 0.5 × 3.5 + 0.5 × 1.0 = 2.25 g cm⁻³, which both now use. The smallest bound
+  icy grain in Example 2 is now 5.1 µm. The reference values of `sublimation_ice` in
+  `tests/reference/examples.json` were regenerated.
+- The LaTeX source of the manual and the scripts that computed the cover images are no longer in
+  the repository; `docs/manual/` holds the PDF and the cover images.
+
 ### Getting started and example notebooks
 - **Prerequisites and setup check.** `requirements.txt` (NumPy ≥ 1.22, meson, ninja, matplotlib,
   astropy, pytest, JupyterLab); `tools/check_setup.py` and `make check` list the compiler, `make`,
@@ -24,9 +39,7 @@
 - **Cover of the manual**: eight images computed with DMS 2.0 (scattered and polarised light of a
   narrow ring, an edge-on disk, two belts at three wavelengths, pericentre and apocentre glow of an
   eccentric ring, a belt with a gap and a ring with a clump) in `docs/manual/cover/images/`. The
-  cover page (title, captions, layout) is set in LaTeX in `dms_manual.tex`. `cover_models.py` holds
-  the input of the models, `cover_images.py` makes the images, and `user_density_cover.f90` is the
-  user-defined density of the gap. The manual describes the models in "About the cover".
+  manual describes the models in "About the cover"; the gap uses a user-defined density.
 - Author name written as Minjae G. Kim (manual, README, `CITATION.cff`).
 - **Python quick start** (`examples/quickstart.py`): a model defined in Python without an input
   file; SED and two images in about ten seconds, figure `quickstart.png`. The README starts with it,

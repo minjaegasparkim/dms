@@ -139,7 +139,7 @@ def test_notebook_1_first_model(tmp_path):
 def test_notebook_2_two_belts_observed(tmp_path):
     out = run_notebook("2_two_belts_observed.ipynb", tmp_path)
     assert "beta >= 0.44 ... 0.50" in out
-    assert "f_d = 1.01e-04" in out
+    assert "f_d = 1.00e-04" in out
 
 
 @requires_exe
