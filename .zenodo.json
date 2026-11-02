@@ -1,0 +1,37 @@
+{
+  "upload_type": "software",
+  "title": "DMS: Debris disks around Main-sequence Stars",
+  "version": "2.0.0",
+  "creators": [
+    {
+      "name": "Kim, Minjae G."
+    }
+  ],
+  "description": "<p>DMS computes what an optically thin debris disk looks like: its spectral energy distribution (SED), thermal emission maps, scattered-light images and linear-polarisation images (Stokes Q, U, Q_phi, U_phi), together with the fractional luminosity and the optical depth. The user describes the star, the dust and the geometry of one or more belts, which may be eccentric; DMS computes the grain temperatures, the optical properties of the grains and the emission of every volume element, and adds them up for any inclination and position angle. The core is written in Fortran with OpenMP and runs from the command line or from Python.</p><p>DMS is distributed under the BSD 3-Clause licence. The Mie routine of miex (Wolf &amp; Voshchinnikov 2004, Comput. Phys. Commun. 162, 113) included in src/mie_routines.f90 is distributed under the CPC Non-Profit Use Licence and is included with the written permission of S. Wolf; see LICENSE.</p>",
+  "license": "bsd-3-clause",
+  "access_right": "open",
+  "keywords": [
+    "debris disks",
+    "circumstellar dust",
+    "radiative transfer",
+    "spectral energy distribution",
+    "scattered light",
+    "polarimetry",
+    "Mie theory",
+    "Fortran",
+    "Python"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://doi.org/10.1051/0004-6361/201833061",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-article"
+    },
+    {
+      "identifier": "https://doi.org/10.1016/j.cpc.2004.06.070",
+      "relation": "references",
+      "resource_type": "publication-article"
+    }
+  ],
+  "language": "eng"
+}

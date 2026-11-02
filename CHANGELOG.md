@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (2026-10) – publication release
+## 2.0.0 (2026-11) – publication release
 
 ### Licence and release
 - **Licence.** DMS is distributed under the BSD 3-Clause licence (`LICENSE`). The Mie routine of
@@ -9,6 +9,8 @@
   `LICENSE`, the module header of `src/mie_routines.f90`, the README and the manual
   ("Citing, licence and acknowledgements") say so. `CITATION.cff` gives the licence, the
   repository and Wolf & Voshchinnikov (2004) as a reference.
+- `.zenodo.json` describes the software for the Zenodo archive (title, author, licence, keywords,
+  and the related papers Kim et al. 2018 and Wolf & Voshchinnikov 2004).
 - **Bulk density of Sil50cice50.** `examples/sublimation_ice.nml` and
   `examples/2_two_belts_observed.ipynb` used 1.95 g cm⁻³ for the 50 % silicate / 50 % ice mixture;
   the volume average is 0.5 × 3.5 + 0.5 × 1.0 = 2.25 g cm⁻³, which both now use. The smallest bound
