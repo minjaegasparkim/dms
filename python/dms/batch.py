@@ -157,7 +157,7 @@ _MIE_KEYS = ("n_components", "optical_data", "size_distribution", "a_min", "a_ma
              "size_file", "emt", "emt_matrix", "emt_inclusion", "emt_volume_fraction", "emt_rule",
              "emt_output", "tdep", "tdep_mode", "tdep_dt", "tdep_component", "tdep_temperatures",
              "tdep_files",
-             "grain_shape", "dhs_fmax", "dhs_nf")
+             "grain_shape", "dhs_fmax", "dhs_nf", "dhs_xmax")
 
 
 def _cache_key(p):

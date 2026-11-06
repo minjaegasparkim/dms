@@ -262,6 +262,10 @@ module parameters
   integer  :: switch_grain_shape
   real(r2) :: dhs_fmax
   integer  :: dhs_nf
+  ! large grains in the DHS (dms 2.1.1): for x_eq > dhs_xmax the efficiencies are those of a grain
+  ! with x_eq = dhs_xmax and the same absorption k x (mie_routines: dhs_large_x); 0 = full DHS
+  real(r2) :: dhs_xmax
+  real(r2), parameter :: dhs_kx_sat = 30.0_r2                    ! k x above which a grain is opaque
   real(r2), allocatable, dimension(:,:) :: beta_rp               ! (ig, ic) F_rad / F_grav
 
   real(r2), allocatable, dimension(:,:,:) :: npm                 ! (ig, ic, id) particles per kg

@@ -23,7 +23,7 @@ subroutine read_input_file(fname)
                   pm_R_c => R_c, pm_R_start => R_start, pm_R_peak => R_peak, &
                   pm_n_belts => n_belts, pm_h_over_r => h_over_r, pm_gauss_cut => gauss_cut, &
                   pm_user_par => user_par, pm_user_density_symmetric => user_density_symmetric, &
-                  pm_dhs_fmax => dhs_fmax, pm_dhs_nf => dhs_nf
+                  pm_dhs_fmax => dhs_fmax, pm_dhs_nf => dhs_nf, pm_dhs_xmax => dhs_xmax
   use functions, only: dms_fail, integer_to_string
 
   implicit none
@@ -67,7 +67,7 @@ subroutine read_input_file(fname)
   integer,  dimension(mc) :: sublimation_residue
   character(len=32)  :: size_distribution, emt_rule, grain_shape, blowout_release
   character(len=512) :: size_file, emt_matrix, emt_inclusion, emt_output
-  real(r2) :: a_min, a_max, q, emt_volume_fraction, dhs_fmax, blowout_beta
+  real(r2) :: a_min, a_max, q, emt_volume_fraction, dhs_fmax, dhs_xmax, blowout_beta
   integer  :: n_sizes, dhs_nf
   logical  :: emt, sublimation, blowout
   real(r2), dimension(mt) :: tdep_temperatures
@@ -94,7 +94,8 @@ subroutine read_input_file(fname)
                   n_sizes, size_file, emt, emt_matrix, emt_inclusion, emt_volume_fraction, emt_rule, &
                   emt_output, tdep, tdep_mode, tdep_dt, tdep_component, tdep_temperatures, tdep_files, &
                   sublimation, t_sublimation, &
-                  sublimation_residue, blowout, blowout_beta, blowout_release, grain_shape, dhs_fmax, dhs_nf
+                  sublimation_residue, blowout, blowout_beta, blowout_release, grain_shape, dhs_fmax, dhs_nf, &
+                  dhs_xmax
   namelist /scattering/ n_angles, phase_function, g1, g2, w, p_max
 
   integer :: u, ios, k, nw, nf
@@ -145,6 +146,7 @@ subroutine read_input_file(fname)
   sublimation = .false.;  t_sublimation = -1.0_r2;  sublimation_residue = 0;  blowout = .true.
   blowout_beta = -1.0_r2;  blowout_release = 'circular'
   grain_shape = merge('dhs   ', 'sphere', switch_grain_shape == 1);  dhs_fmax = pm_dhs_fmax;  dhs_nf = pm_dhs_nf
+  dhs_xmax = pm_dhs_xmax
 
   n_angles = n_angle2;  phase_function = "mie";  g1 = 0.0_r2;  g2 = 0.0_r2;  w = 1.0_r2;  p_max = 0.0_r2
 
@@ -415,7 +417,7 @@ subroutine read_input_file(fname)
   case ("dhs");            switch_grain_shape = 1
   case default;  call dms_fail("&dust grain_shape must be 'sphere' or 'dhs'");  return
   end select
-  pm_dhs_fmax = dhs_fmax;  pm_dhs_nf = dhs_nf
+  pm_dhs_fmax = dhs_fmax;  pm_dhs_nf = dhs_nf;  pm_dhs_xmax = dhs_xmax
   if (switch_grain_shape == 1) then
     ! f_max = 1 is allowed (Min et al. 2005): the Gauss-Legendre nodes lie inside (0, f_max)
     if (.not. (dhs_fmax > 0.0_r2 .and. dhs_fmax <= 1.0_r2)) then
@@ -423,6 +425,12 @@ subroutine read_input_file(fname)
     end if
     if (dhs_nf < 1 .or. dhs_nf > 100) then
       call dms_fail("&dust dhs_nf must be between 1 and 100");  return
+    end if
+    if (.not. (dhs_xmax >= 0.0_r2)) then
+      call dms_fail("&dust dhs_xmax must be >= 0 (0: full DHS for all sizes)");  return
+    end if
+    if (dhs_xmax > 0.0_r2 .and. dhs_xmax < 10.0_r2) then
+      call dms_fail("&dust dhs_xmax must be 0 or >= 10");  return
     end if
   end if
 

@@ -28,8 +28,8 @@ subroutine Qabs_Qsca_S11_S12_cals
   implicit none
 
   integer     :: ntot, it, il, ig, is, ia, ier
-  real(r2)    :: sizepar, qext, qsca, qabs, qbk, qpr, alb, gsc, nn, kk, norm, ct, ph, pp, gbytes
-  complex(r2) :: ri
+  real(r2)    :: sizepar, qext, qsca, qabs, qbk, qpr, alb, gsc, nn, kk, norm, ct, ph, pp, gbytes, xs
+  complex(r2) :: ri, ris
   integer     :: mfine, kfwd, nab
   complex(r2), allocatable, dimension(:,:) :: ab
   complex(r2), allocatable, dimension(:) :: sf1, sf2
@@ -68,7 +68,7 @@ subroutine Qabs_Qsca_S11_S12_cals
 
     !$omp parallel do schedule(dynamic, 1) default(shared) &
     !$omp private(it, il, ig, is, nn, kk, ri, sizepar, qext, qsca, qabs, qbk, qpr, alb, gsc, ier, &
-    !$omp         norm, mfine, kfwd, nab, ab, sf1, sf2, f11, f12)
+    !$omp         norm, mfine, kfwd, nab, ab, sf1, sf2, f11, f12, ris, xs)
     do it = 1, ntot
 
       il = mod(it - 1, n_wavelength_obs) + 1
@@ -95,7 +95,14 @@ subroutine Qabs_Qsca_S11_S12_cals
 
       if (switch_grain_shape == 1) then
         ! distribution of hollow spheres: efficiencies and normalised S11, S12 averaged over f
-        call dhs_observing(ri, sizepar, qext, qsca, qabs, f11, f12, ier)
+        ! without scattered light only the efficiencies are needed: large grains as on the ri grid
+        ! (dhs_xmax); with scattered light the full DHS (the phase function depends on the size)
+        if (do_sca) then
+          call dhs_observing(ri, sizepar, qext, qsca, qabs, f11, f12, ier)
+        else
+          call dhs_large_x(ri, sizepar, dhs_xmax, dhs_kx_sat, ris, xs)
+          call dhs_observing(ris, xs, qext, qsca, qabs, f11, f12, ier)
+        end if
         if (ier == 0) then
           if (.not. (qabs > 0.0_r2)) qabs = 0.0_r2
           Qabs_o(il, ig, is) = qabs

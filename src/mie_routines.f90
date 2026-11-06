@@ -37,7 +37,7 @@ module mie_routines
 
   private
   public :: shexqnn2, mie_amplitudes, mie_amplitudes_grid, coated_ab, q_from_ab, dhs_points, &
-            dhs_efficiencies, dhs_radii
+            dhs_efficiencies, dhs_radii, dhs_large_x
 
 contains
 
@@ -467,10 +467,16 @@ contains
 
     zc = m1 * x1;  za = m2 * x1;  zb = m2 * x2
     allocate(d1c(0:nmx), d1a(0:nmx), d1b(0:nmx), d1x(0:nmx), d3a(0:nab), d3b(0:nab))
-    call d1_down(zc, nmx, d1c)
+    ! real arguments (the outer size parameter, and the core of a hollow sphere, m1 = 1) in real
+    ! arithmetic: same values, about four times cheaper than the complex recurrence
+    if (aimag(zc) == 0.0_r2) then
+      call d1_down_real(real(zc, kind=r2), nmx, d1c)
+    else
+      call d1_down(zc, nmx, d1c)
+    end if
     call d1_down(za, nmx, d1a)
     call d1_down(zb, nmx, d1b)
-    call d1_down(cmplx(x2, 0.0_r2, kind=r2), nmx, d1x)
+    call d1_down_real(x2, nmx, d1x)
 
     ! D3 by upward recurrence of psi_n xi_n
     pxa = 0.5_r2 * (1.0_r2 - exp(2.0_r2 * ci * za));  d3a(0) = ci
@@ -533,6 +539,21 @@ contains
         d(k-1) = real(k, kind=r2) / z - 1.0_r2 / (d(k) + real(k, kind=r2) / z)
       end do
     end subroutine d1_down
+
+    pure subroutine d1_down_real(z, nm, d)
+      real(kind=r2), intent(in)     :: z
+      integer, intent(in)           :: nm
+      complex(kind=r2), intent(out) :: d(0:nm)
+      real(kind=r2) :: dr, rk
+      integer :: k
+      dr = 0.0_r2
+      d(nm) = (0.0_r2, 0.0_r2)
+      do k = nm, 1, -1
+        rk = real(k, kind=r2) / z
+        dr = rk - 1.0_r2 / (dr + rk)
+        d(k-1) = cmplx(dr, 0.0_r2, kind=r2)
+      end do
+    end subroutine d1_down_real
 
   end subroutine coated_ab
 
@@ -617,6 +638,40 @@ contains
     x_out = x_eq / (1.0_r2 - f)**(1.0_r2 / 3.0_r2)
     x_in  = x_out * f**(1.0_r2 / 3.0_r2)
   end subroutine dhs_radii
+
+  !===================================================================================================
+  ! Large grains in the DHS (dhs_xmax): the cost of the hollow-sphere series grows with the size
+  ! parameter, and for x_eq >> 1 the efficiencies of a grain depend on its size mainly through the
+  ! absorption along the paths inside it, i.e. through k x (geometrical optics). A grain with
+  ! x_eq > xmax is therefore replaced by one with x_eq = xmax and the imaginary part of the
+  ! refractive index raised so that k x stays the same, k' = k x_eq / xmax. Once k x exceeds
+  ! kx_sat the grain is opaque and its efficiencies no longer depend on k x; k' is then limited to
+  ! kx_sat / xmax (if k xmax >= kx_sat already, k is kept), which keeps k' << n and the
+  ! reflection at the surface unchanged. The efficiencies, relative to pi a_eq^2, are those at
+  ! xmax. Compared with the full DHS for x_eq = 3e3 - 7e4 the error of Qabs, Qpr and Qsca is
+  ! < 1 % for absorbing material (k >~ 0.01) at xmax = 1000; for nearly transparent material
+  ! (k ~ 1e-7 - 1e-5, Qabs < 1e-3) Qabs differs by up to ~10 %, the same as the change of the full
+  ! DHS between 10 and 40 points in f. xmax <= 0: no substitution.
+  !===================================================================================================
+
+  pure subroutine dhs_large_x(ri, x_eq, xmax, kx_sat, ri_s, x_s)
+
+    complex(kind=r2), intent(in)  :: ri
+    real(kind=r2), intent(in)     :: x_eq, xmax, kx_sat
+    complex(kind=r2), intent(out) :: ri_s
+    real(kind=r2), intent(out)    :: x_s
+
+    real(kind=r2) :: k, kp
+
+    ri_s = ri;  x_s = x_eq
+    if (.not. (xmax > 0.0_r2) .or. x_eq <= xmax) return
+    k  = aimag(ri)
+    kp = k
+    if (k > 0.0_r2 .and. k * xmax < kx_sat) kp = k * min(x_eq / xmax, kx_sat / (k * xmax))
+    ri_s = cmplx(real(ri, kind=r2), kp, kind=r2)
+    x_s  = xmax
+
+  end subroutine dhs_large_x
 
   !===================================================================================================
   ! DHS efficiencies, relative to the geometrical cross section pi a_eq^2 of the volume-equivalent

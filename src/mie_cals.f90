@@ -23,10 +23,14 @@ subroutine mie_cals
 
   implicit none
 
-  integer :: ntot, it, ilr, ig, is, ier
-  real(r2) :: sizepar, qext, qsca, qabs, qbk, qpr, alb, gsc
-  complex(r2) :: ri
+  integer :: ntot, it, ilr, ig, is, ier, n_sub, n_sat
+  real(r2) :: sizepar, qext, qsca, qabs, qbk, qpr, alb, gsc, xs, xbig
+  complex(r2) :: ri, ris
   complex(r2), dimension(3) :: sdum1, sdum2
+  ! DHS with dhs_xmax: efficiencies of opaque grains (k dhs_xmax >= dhs_kx_sat) at x = dhs_xmax,
+  ! the same for all larger grains at a wavelength (computed once)
+  real(r2), allocatable, dimension(:,:,:) :: qsat
+  logical,  allocatable, dimension(:,:)   :: has_sat
 
   if (verbose) print *, " "
   if (verbose) print *, " 3) Mie calculation on the optical-data grid"
@@ -45,8 +49,31 @@ subroutine mie_cals
 
   ntot = n_wavelength_int * n_grain_radius * n_species
 
+  ! DHS, large grains: opaque grains with x_eq > dhs_xmax all have the efficiencies at dhs_xmax
+  n_sub = 0;  n_sat = 0
+  if (switch_grain_shape == 1 .and. dhs_xmax > 0.0_r2) then
+    allocate(qsat(2, n_wavelength_int, n_species), has_sat(n_wavelength_int, n_species))
+    has_sat = .false.
+    xbig = 2.0_r2 * pi * rad(n_grain_radius)
+    !$omp parallel do schedule(dynamic, 4) default(shared) &
+    !$omp private(it, ilr, is, qext, qsca, qabs, qpr, gsc, ier)
+    do it = 1, n_wavelength_int * n_species
+      ilr = mod(it - 1, n_wavelength_int) + 1
+      is  = (it - 1) / n_wavelength_int + 1
+      if (xbig / wavelength_int(ilr) <= dhs_xmax) cycle
+      if (k_ri(ilr, is) * dhs_xmax < dhs_kx_sat) cycle
+      call dhs_efficiencies(cmplx(n_ri(ilr, is), k_ri(ilr, is), kind=r2), dhs_xmax, dhs_fmax, dhs_nf, &
+                            qext, qsca, qabs, qpr, gsc, ier)
+      if (ier /= 0) cycle                                    ! computed again below (with its error)
+      qsat(1, ilr, is) = qabs;  qsat(2, ilr, is) = qpr
+      has_sat(ilr, is) = .true.
+    end do
+    !$omp end parallel do
+  end if
+
   !$omp parallel do schedule(dynamic, 16) default(shared) &
-  !$omp private(it, ilr, ig, is, sizepar, ri, qext, qsca, qabs, qbk, qpr, alb, gsc, ier, sdum1, sdum2)
+  !$omp private(it, ilr, ig, is, sizepar, ri, ris, xs, qext, qsca, qabs, qbk, qpr, alb, gsc, ier, &
+  !$omp         sdum1, sdum2) reduction(+: n_sub, n_sat)
   do it = 1, ntot
 
     ilr = mod(it - 1, n_wavelength_int) + 1
@@ -57,7 +84,19 @@ subroutine mie_cals
     ri      = cmplx(n_ri(ilr, is), k_ri(ilr, is), kind=r2)
 
     if (switch_grain_shape == 1) then
-      call dhs_efficiencies(ri, sizepar, dhs_fmax, dhs_nf, qext, qsca, qabs, qpr, gsc, ier)
+      call dhs_large_x(ri, sizepar, dhs_xmax, dhs_kx_sat, ris, xs)
+      if (xs < sizepar) then
+        n_sub = n_sub + 1
+        if (has_sat(ilr, is)) then
+          if (aimag(ris) == k_ri(ilr, is)) then
+            n_sat = n_sat + 1
+            Qabs_ri(ilr, ig, is) = max(qsat(1, ilr, is), 0.0_r2)
+            Qpr_ri (ilr, ig, is) = qsat(2, ilr, is)
+            cycle
+          end if
+        end if
+      end if
+      call dhs_efficiencies(ris, xs, dhs_fmax, dhs_nf, qext, qsca, qabs, qpr, gsc, ier)
     else
       call shexqnn2(ri, sizepar, qext, qsca, qabs, qbk, qpr, alb, gsc, ier, sdum1, sdum2, .false., 2)
     end if
@@ -81,6 +120,8 @@ subroutine mie_cals
   if (dms_ierr /= 0) return
 
   if (verbose) print *, "    done: ", ntot, " Mie calculations"
+  if (verbose .and. n_sub > 0) print *, "    DHS: ", n_sub, " grains with x > dhs_xmax = ", &
+    real_to_string(dhs_xmax), " computed at dhs_xmax with the same k x (", n_sat, " of them opaque)"
 
 end subroutine mie_cals
 
@@ -94,7 +135,8 @@ subroutine load_optics_cache()
 
   character(len=8)  :: magic
   integer           :: unit, ios, nlr, ng, ns, nl, na, has_s, shp, nfd
-  real(r2)          :: fmx
+  real(r2)          :: fmx, xmx
+  integer, external  :: shape_code
   real(r2), allocatable, dimension(:) :: wl_r, rad_r, wl_o
   real(r2), allocatable, dimension(:,:) :: nr, kr
   logical :: ex, ok
@@ -114,11 +156,15 @@ subroutine load_optics_cache()
   if (ios /= 0) return
 
   read(unit, iostat=ios) magic, nlr, ng, ns, nl, na, has_s, shp, nfd, fmx
+  ! shp: 0 sphere, 1 DHS, 2 DHS with dhs_xmax (followed by dhs_xmax)
+  xmx = 0.0_r2
+  if (ios == 0 .and. shp == 2) read(unit, iostat=ios) xmx
   ok = (ios == 0 .and. magic == 'DMSMIE05' .and. nlr == n_wavelength_int .and. &
-        shp == switch_grain_shape .and. &
+        shp == shape_code() .and. &
         ng == n_grain_radius .and. ns == n_species .and. nl == n_wavelength_obs .and. &
         na == n_angle2)
-  if (ok .and. shp == 1) ok = (nfd == dhs_nf .and. abs(fmx - dhs_fmax) <= 1.0e-12_r2)
+  if (ok .and. shp >= 1) ok = (nfd == dhs_nf .and. abs(fmx - dhs_fmax) <= 1.0e-12_r2)
+  if (ok .and. shp == 2) ok = (abs(xmx - dhs_xmax) <= 1.0e-12_r2 * dhs_xmax)
   if (ok .and. do_sca) ok = (has_s == 1)
 
   if (ok) then
@@ -169,6 +215,7 @@ subroutine save_optics_cache()
 
   integer :: unit, has_s, ios
   character(len=:), allocatable :: fname, ftmp
+  integer, external :: shape_code
   character(len=24) :: pidstr
 
   interface
@@ -202,7 +249,8 @@ subroutine save_optics_cache()
     return
   end if
   write(unit) 'DMSMIE05', n_wavelength_int, n_grain_radius, n_species, n_wavelength_obs, &
-              n_angle2, has_s, switch_grain_shape, dhs_nf, dhs_fmax
+              n_angle2, has_s, shape_code(), dhs_nf, dhs_fmax
+  if (shape_code() == 2) write(unit) dhs_xmax
   write(unit) wavelength_int, rad, wavelength_obs, n_ri, k_ri
   write(unit) Qabs_ri, Qpr_ri, Cabs, Csca
   if (has_s == 1) write(unit) S11_norm, S12_norm
@@ -218,3 +266,17 @@ subroutine save_optics_cache()
   if (verbose) print *, "    optical properties saved to ", fname
 
 end subroutine save_optics_cache
+
+
+integer function shape_code()
+
+  ! optics cache: 0 homogeneous spheres, 1 DHS, 2 DHS with dhs_xmax > 0 (the value follows)
+
+  use parameters
+
+  implicit none
+
+  shape_code = switch_grain_shape
+  if (switch_grain_shape == 1 .and. dhs_xmax > 0.0_r2) shape_code = 2
+
+end function shape_code

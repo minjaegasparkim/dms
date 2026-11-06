@@ -100,6 +100,15 @@ subroutine summary(run_time)
   end if
   call say("   grain radii "//real_to_string(grain_radius_min)//" - "//real_to_string(grain_radius_max)// &
            " micron, q = "//real_to_string(q_size)//", "//integer_to_string(n_grain_radius)//" bins")
+  if (switch_grain_shape == 1) then
+    if (dhs_xmax > 0.0_r2) then
+      call say("   grain shape: DHS, f_max = "//real_to_string(dhs_fmax)//", "//integer_to_string(dhs_nf)// &
+               " points; x > dhs_xmax = "//real_to_string(dhs_xmax)//" computed at dhs_xmax with the same k x")
+    else
+      call say("   grain shape: DHS, f_max = "//real_to_string(dhs_fmax)//", "//integer_to_string(dhs_nf)// &
+               " points (full DHS for all sizes)")
+    end if
+  end if
   select case (switch_phase_function)
   case (1)
     call say("   phase function: Mie theory")

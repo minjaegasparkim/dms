@@ -1,5 +1,40 @@
 # Changelog
 
+## 2.1.1 (2026-11) – faster DHS for large grains
+
+- **New `&dust dhs_xmax` (default 1000), which changes the default results of
+  `grain_shape = 'dhs'` slightly.** The DHS cost grows with the size parameter, and the large
+  grains at short wavelengths took most of the time (for grains up to 1 mm and optical data from
+  0.1 micron, 90 % of it was spent at x > 1000). A grain with x > `dhs_xmax` is now computed at
+  x = `dhs_xmax` with k raised so that k x stays the same (limited to k x = 30, opaque); in
+  geometrical optics the efficiencies depend on the size only through k x. `dhs_xmax = 0` gives the
+  full DHS of version 2.1.0.
+  - Efficiencies at x = 3e3–7e4 against the full DHS: Qabs, Qpr, Qsca within 1 % for absorbing
+    material (astronomical silicate, forsterite in the UV); for nearly transparent forsterite
+    (k ~ 1e-7–1e-5, Qabs < 1e-3) Qabs within ~10 %, the size of the change of the full DHS between
+    10 and 40 points in f.
+  - Debris ring (A star, 27.75–32.25 au, astronomical silicate + forsterite A/B/C 50–295 K,
+    0.264–1000 micron, 30 sizes) against the full DHS: grain temperatures within 0.14 %, fluxes at
+    33.5–100 micron within 0.05 %, at 10 micron 0.36 %. With `dhs_xmax = 300`: 0.43 %, 0.36 %,
+    1.9 %.
+  - Time of that model with 100 sizes on 2 threads: 760 s (before: ~71 min, estimated from the
+    30-size runs); with 30 sizes 247 s against 1204 s for the full DHS.
+  - Used on the optical-data grid and, without scattered light, at the observing wavelengths. With
+    scattered light the observing wavelengths keep the full DHS (the phase function depends on the
+    size).
+  - Opaque grains above `dhs_xmax` have the same efficiencies at a wavelength; they are computed
+    once per wavelength and species.
+  - The optics cache records `dhs_xmax` (caches of spheres and of the full DHS remain valid).
+- **Coated-sphere routine**: the logarithmic derivatives of real arguments (the outer size
+  parameter, the vacuum core of the DHS) are computed in real arithmetic; the DHS is ~15 % faster.
+  Only rounding changes.
+- `grain_shape = 'sphere'` is unchanged bit for bit (checked with one thread).
+- Tests: `tests/test_dhs.py` (DHS against the full DHS for `dhs_xmax` = 1000 and 300, spheres
+  unaffected, invalid values, optics cache).
+- Documentation: `docs/input_reference.md`, manual (Sect. "Distribution of hollow spheres" and the
+  input table), `docs/dhs_xmax_comparison.md` (measurements and comparison tables); the summary
+  lists the DHS settings.
+
 ## 2.1.0 (2026-11) – temperature-dependent optical constants for several components
 
 - **Any number of components with temperature-dependent optical constants** (`&dust tdep`, one

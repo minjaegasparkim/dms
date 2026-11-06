@@ -54,7 +54,7 @@ subroutine set_defaults
   switch_tdep_mode = 1;  tdep_step = 5.0_r2
   switch_sublimation = 0;  switch_blowout = 1
   switch_blowout_release = 1;  blowout_beta_user = -1.0_r2
-  switch_grain_shape = 0;  dhs_fmax = 0.8_r2;  dhs_nf = 10
+  switch_grain_shape = 0;  dhs_fmax = 0.8_r2;  dhs_nf = 10;  dhs_xmax = 1000.0_r2
 
   switch_singlegrain_or_Dist = 2
   grain_radius_min = 1.0_r2;  grain_radius_max = 1000.0_r2;  q_size = 3.5_r2;  n_grain_radius = 100
