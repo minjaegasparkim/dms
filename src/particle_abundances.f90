@@ -32,7 +32,7 @@ subroutine particle_abundances
   real(r2), allocatable, dimension(:)     :: Istar_ri
   integer,  allocatable, dimension(:)     :: order
   integer  :: ic, ig, id, is, k, kk, itmp, ic_from, ic_to, il, ia, nremoved
-  real(r2) :: m0, Tg, w
+  real(r2) :: m0, Tg, w, Tlo, Thi
   character(len=:), allocatable :: crit_txt
 
   if (verbose) print *, " "
@@ -198,6 +198,49 @@ subroutine particle_abundances
     end if
     return
   end if
+
+  !------------------------------------------------------------------------------------------------
+  ! grains colder or hotter than the data sets of their component (temperature-dependent data):
+  ! the coldest or hottest set is used; reported once per component
+  !------------------------------------------------------------------------------------------------
+
+  if (allocated(comp_T_outside)) deallocate(comp_T_outside)
+  allocate(comp_T_outside(4, n_grain_components))
+  comp_T_outside = -1.0_r2
+  do ic = 1, n_grain_components
+    if (comp_n_sets(ic) < 2) cycle
+    Tlo = set_T(comp_first_set(ic))
+    Thi = set_T(comp_first_set(ic) + comp_n_sets(ic) - 1)
+    do id = 1, n_dist
+      do ig = 1, n_grain_radius
+        if (npm(ig, ic, id) <= 0.0_r2) cycle
+        Tg = T_dist(ig, ic, id)
+        if (Tg < Tlo) then
+          if (comp_T_outside(1, ic) < 0.0_r2) then
+            comp_T_outside(1:2, ic) = Tg
+          else
+            comp_T_outside(1, ic) = min(comp_T_outside(1, ic), Tg)
+            comp_T_outside(2, ic) = max(comp_T_outside(2, ic), Tg)
+          end if
+        else if (Tg > Thi) then
+          if (comp_T_outside(3, ic) < 0.0_r2) then
+            comp_T_outside(3:4, ic) = Tg
+          else
+            comp_T_outside(3, ic) = min(comp_T_outside(3, ic), Tg)
+            comp_T_outside(4, ic) = max(comp_T_outside(4, ic), Tg)
+          end if
+        end if
+      end do
+    end do
+    if (verbose .and. comp_T_outside(1, ic) > 0.0_r2) &
+      print *, "    warning: component ", ic, ": grain temperatures ", real_to_string(comp_T_outside(1, ic)), &
+               " - ", real_to_string(comp_T_outside(2, ic)), " K are below the coldest data set (", &
+               real_to_string(Tlo), " K); that set is used"
+    if (verbose .and. comp_T_outside(3, ic) > 0.0_r2) &
+      print *, "    warning: component ", ic, ": grain temperatures ", real_to_string(comp_T_outside(3, ic)), &
+               " - ", real_to_string(comp_T_outside(4, ic)), " K are above the hottest data set (", &
+               real_to_string(Thi), " K); that set is used"
+  end do
 
   ! one population for all distances only without sublimation, T-dependent optics and a
   ! distance-dependent blow-out threshold

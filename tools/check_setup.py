@@ -69,6 +69,10 @@ def main():
         except Exception:
             detail = path
     check(bool(path), f"Fortran compiler ({fc})", detail, INSTALL_FC)
+    cc = os.environ.get("CC") or "cc"
+    check(bool(shutil.which(cc)), f"C compiler ({cc})", shutil.which(cc) or "",
+          "macOS: xcode-select --install; Debian/Ubuntu: sudo apt install gcc "
+          "(DMS 2.1 compiles one small C file)")
     check(bool(shutil.which("make")), "make", "",
           "macOS: xcode-select --install; Debian/Ubuntu: sudo apt install make")
 

@@ -29,6 +29,20 @@ al. 2016 and Potapov et al. 2019a, b (see the README.txt files in the sub-direct
 Note: `pure_ices/composite_cice_085K.txt` is identical to `composite_cice_075K.txt`, and
 `ice_astrosilicate_MG/Sil30aice70` is identical to `Sil25aice75`. Please check these two files.
 
+## suto2006/
+
+Crystalline forsterite at 50, 100, 150, 200 and 295 K for the three crystallographic axes A, B
+and C (Suto et al. 2006, MNRAS 370, 1599; please cite it), 0.1–1000 micron, 2000 points. The
+files are named for temperature-dependent optical data (DMS 2.1): `fo_suto2006_<axis>_<T>K.dat`.
+Use each axis as one component with the base name, e.g.
+
+    optical_data = 'suto2006/fo_suto2006_A', 'suto2006/fo_suto2006_B', 'suto2006/fo_suto2006_C'
+    abundance    = 1., 1., 1.
+    tdep         = .true., .true., .true.
+
+Below 0.26 micron the data are the same at all temperatures. The original file names were
+`nk_Suto_Fo<T>K-<axis>.dat`. Grains colder than 50 K use the 50 K data (DMS warns).
+
 ## Files in this directory
 
 These are the files of the former `ri-data/` directory. The names were kept so that earlier

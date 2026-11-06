@@ -1,5 +1,45 @@
 # Changelog
 
+## 2.1.0 (2026-11) – temperature-dependent optical constants for several components
+
+- **Any number of components with temperature-dependent optical constants** (`&dust tdep`, one
+  logical per component). For such a component `optical_data` is a base name, and DMS uses every
+  file `<base>_<T>K` or `<base>_<T>K.<extension>` in `data_dir`: T integer or decimal, leading zeros
+  allowed (`_10K`, `_010K`, `_12.5K`), any extension or none, lower-case `k` accepted. The sets are
+  sorted by T; two files with the same T are an error, no file is an error, a single file is used
+  without temperature dependence (with a warning). Version 2.0 allowed one component, with the
+  temperatures and files listed in the input.
+- The directory is listed with `opendir`/`readdir` through a small C function
+  (`src/dir_listing.c`, called with `ISO_C_BINDING` from the new module `src/tdep_search.f90`);
+  the Makefile compiles it with `CC` (default `cc`).
+- **`tdep_mode = 'linear'`**: n and k interpolated linearly in T between the two sets around the
+  grain temperature. DMS adds interpolated sets spaced by at most `tdep_dt` (default 5 K) and every
+  grain uses the closest, so n, k are interpolated to within `tdep_dt`/2. `'nearest'` (default)
+  is the behaviour of version 2.0.
+- Grains (after sublimation and blow-out) colder or hotter than all sets of their component use the
+  coldest or hottest set; DMS now reports their temperature range once per component on the screen
+  and in the summary (before, silently).
+- The screen output and the summary list the files and temperatures found for every component.
+- The input of version 2.0 (`tdep_component`, `tdep_temperatures`, `tdep_files`) is still read and
+  gives the same results (the sets may now be given in any order); combining it with `tdep` is an
+  error.
+- Python: new keys `tdep`, `tdep_mode`, `tdep_dt` (also in the optics-cache key of `dms.batch`,
+  together with the files found); `dms.tdep_files(base, data_dir)` lists the sets as DMS finds
+  them; `Result.species` gives component, temperature, data file or interpolated, and file of every
+  optical species.
+- **Memory of the scattering matrix**: the scattering kernels are now computed in place, so that
+  two arrays of n_lambda x n_angles x n_sizes x n_species exist at a time instead of four (same
+  results). DMS prints the memory needed when it exceeds 1 GB; with many optical species (e.g.
+  `'linear'` with a small `tdep_dt`) a run with scattered light can exceed the memory of a laptop,
+  and `emission = 'thermal'` does not need these arrays.
+- **New optical data**: `data/optical_constants/suto2006/`, crystalline forsterite at 50–295 K for
+  the axes A, B, C (Suto et al. 2006), renamed to `fo_suto2006_<axis>_<T>K.dat` for the new file
+  names.
+- Tests: `tests/test_tdep.py` (file names and edge cases, duplicate temperatures, no or one file,
+  the input of version 2.0, several components, the linear mode, temperatures outside the sets).
+- Documentation: `docs/input_reference.md`, `docs/python.md`, manual (Sect. "Temperature-dependent
+  optical constants").
+
 ## 2.0.0 (2026-11) – publication release
 
 ### Licence and release

@@ -7,11 +7,12 @@ Thermal emission, scattered light and polarisation of optically thin debris disk
     res = dms.Model.from_file("examples/debris_ring.nml").run()
 """
 
-from .model import Model, Result, DMSError, SizeGridWarning, default_data_dir
+from .model import Model, Result, DMSError, SizeGridWarning, default_data_dir, tdep_files
 from .namelist import read_namelist, write_namelist
 from . import io, plot, stellar, batch, emc
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
-__all__ = ["Model", "Result", "DMSError", "SizeGridWarning", "default_data_dir", "read_namelist", "write_namelist",
+__all__ = ["Model", "Result", "DMSError", "SizeGridWarning", "default_data_dir", "tdep_files", "read_namelist",
+           "write_namelist",
            "io", "plot", "stellar", "batch", "emc", "__version__"]

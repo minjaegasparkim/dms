@@ -18,6 +18,7 @@ fitting), use separate processes (multiprocessing, MPI); each process has its ow
 import copy
 import math
 import os
+import re
 import tempfile
 import warnings
 
@@ -67,6 +68,30 @@ def check_size_grid(dust):
             warnings.warn(f"{per_decade:.0f} size bins per decade (n_sizes = {n}); use >= 30 per decade "
                           "for smooth Mie polarisation images and (sub)millimetre fluxes",
                           SizeGridWarning, stacklevel=3)
+
+
+def tdep_files(base, data_dir=None):
+    """Data sets of temperature-dependent optical constants, as DMS finds them for a component
+    with ``tdep = .true.``: the files <base>_<T>K or <base>_<T>K.<extension> in the optical-data
+    directory (T integer or decimal, leading zeros allowed, any extension or none; a lower-case
+    'k' is accepted too). Returns a list of (T [K], file relative to data_dir), sorted by T.
+    Raises ValueError if two files have the same temperature, as DMS does."""
+    data_dir = default_data_dir() if data_dir is None else data_dir
+    head, prefix = os.path.split(base)
+    folder = os.path.join(data_dir, head) if head else data_dir
+    pat = re.compile(re.escape(prefix) + r"_(\d+(?:\.\d+)?)[Kk](?:\..*)?$")
+    found = []
+    for name in sorted(os.listdir(folder)):
+        if name.startswith("."):
+            continue
+        m = pat.match(name)
+        if m and float(m.group(1)) > 0:
+            found.append((float(m.group(1)), os.path.join(head, name) if head else name))
+    found.sort(key=lambda t: t[0])
+    for (t1, f1), (t2, f2) in zip(found, found[1:]):
+        if abs(t2 - t1) <= 1e-9 * t2:
+            raise ValueError(f"two files with the same temperature for {base}: {f1} and {f2}")
+    return found
 
 
 def _require_extension():
@@ -142,6 +167,9 @@ class Result:
     tau_profile : dict r_au, mean, pericentre, apocentre (vertical geometrical optical depth)
     grains : dict a, edges, number[n_size, n_comp], beta[n_size, n_comp]
     temperature : dict r_au, T[n_dist, n_comp, n_size]
+    species : dict component[n_sp] (1-based), T[n_sp] (K, -1 without temperature dependence),
+              is_data[n_sp] (False for species interpolated in T, tdep_mode = 'linear'),
+              file[n_sp]; one entry per optical species
     phase : dict angle [deg], scattered[n_wl, 180], polarised[n_wl, 180] (Jy per 1-degree bin of
             the scattering angle, whole disk)
     """
@@ -175,6 +203,18 @@ class Result:
                     "beta": np.array(beta)}
         r_au, temp = _dms.get_temperature(ndist, ngr, ncomp)
         r.temperature = {"r_au": np.array(r_au), "T": np.transpose(temp, (2, 1, 0)).copy()}
+        nsp = int(_dms.get_nspecies())
+        if nsp > 0:
+            comp, tsp, isd = _dms.get_species(nsp)
+            files = []
+            for k in range(nsp):
+                f = _dms.get_species_file(k + 1)
+                files.append((f.decode() if isinstance(f, bytes) else str(f)).strip())
+            r.species = {"component": np.array(comp), "T": np.array(tsp),
+                         "is_data": np.array(isd).astype(bool), "file": files}
+        else:
+            r.species = {"component": np.zeros(0, int), "T": np.zeros(0), "is_data": np.zeros(0, bool),
+                         "file": []}
         ang, fsca, fpol = _dms.get_phase(nwl, 180)
         r.phase = {"angle": np.array(ang), "scattered": np.array(fsca), "polarised": np.array(fpol)}
         r._images = {}

@@ -179,11 +179,31 @@ module parameters
   !-----------------------------------------------------------------------------------------------
   ! 7. Temperature-dependent optical constants
   !-----------------------------------------------------------------------------------------------
+  ! input of version 2.0 (one component; still accepted)
   integer :: switch_Tdep_optics                                  ! 0 no, 1 yes
   integer :: Tdep_comp                                           ! component that uses them
   integer :: n_Tdep                                              ! number of data sets
   real(r2), allocatable, dimension(:) :: Tdep_T                  ! temperatures of the data sets
   character(len=512), allocatable, dimension(:) :: Tdep_file
+  ! version 2.1: any number of components; the data sets of a component are found from its base
+  ! name (files <base>_<T>K or <base>_<T>K.<extension> in the optical-data directory)
+  logical,  allocatable, dimension(:) :: comp_tdep               ! (ic) temperature-dependent data
+  integer  :: switch_tdep_mode = 1                               ! 1 nearest data set, 2 linear in T
+  real(r2) :: tdep_step = 5.0_r2                                 ! 'linear': largest step of the
+                                                                 ! interpolated sets [K]
+  ! data sets of every component (a component without T-dependent data has one set, T = -1)
+  integer,  allocatable, dimension(:) :: comp_first_set, comp_n_sets
+  real(r2), allocatable, dimension(:) :: set_T                   ! temperature [K] of a set
+  character(len=512), allocatable, dimension(:) :: set_file      ! file (relative to ri_dir)
+  ! species made from the sets: 'nearest' one species per set; 'linear' also interpolated species
+  ! between neighbouring sets: n, k = (1 - w) (n, k)_lo + w (n, k)_hi
+  logical,  allocatable, dimension(:) :: species_is_data         ! .true.: a data file itself
+  integer,  allocatable, dimension(:) :: species_set_lo, species_set_hi
+  real(r2), allocatable, dimension(:) :: species_w
+  ! grains (with npm > 0) colder or hotter than the data sets of their component [K]; -1: none
+  real(r2), allocatable, dimension(:,:) :: comp_T_outside        ! (1:4, ic) Tmin, Tmax below the
+                                                                 ! coldest set, Tmin, Tmax above
+                                                                 ! the hottest
 
   !-----------------------------------------------------------------------------------------------
   ! 8. Optical properties

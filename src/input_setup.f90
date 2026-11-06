@@ -51,6 +51,7 @@ subroutine set_defaults
 
   n_grain_components = 0
   switch_Tdep_optics = 0;  Tdep_comp = 0;  n_Tdep = 0
+  switch_tdep_mode = 1;  tdep_step = 5.0_r2
   switch_sublimation = 0;  switch_blowout = 1
   switch_blowout_release = 1;  blowout_beta_user = -1.0_r2
   switch_grain_shape = 0;  dhs_fmax = 0.8_r2;  dhs_nf = 10

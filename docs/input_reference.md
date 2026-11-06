@@ -146,8 +146,11 @@ All wavelengths must lie inside the wavelength range shared by all optical-data 
 | `sublimation` | `.false.` | switch sublimation on |
 | `t_sublimation` | −1 | per component [K]; a value ≤ 0 means the component never sublimates |
 | `sublimation_residue` | 0 | per component: 0 means the grain vanishes, n means it becomes component n |
-| `tdep_component` | 0 | component that uses temperature-dependent optical data (0 = none) |
-| `tdep_temperatures`, `tdep_files` | | temperatures [K] and files of the data sets; every grain uses the set closest to its own temperature |
+| `tdep` | `.false.` | per component: temperature-dependent optical data (any number of components). For such a component `optical_data` is a base name, e.g. `'kim2019/pure_ices/composite_cice'`, and DMS uses every file `<base>_<T>K` or `<base>_<T>K.<extension>` in `data_dir` (T integer or decimal, leading zeros allowed: `_10K`, `_010K`, `_12.5K`; any extension or none; a lower-case `k` is accepted too). T is read from the file name and the sets are sorted by it. Two files with the same T (e.g. `_010K.txt` and `_10K.dat`) are an error; no file is an error; a single file is used without temperature dependence (with a warning). The files found are listed on the screen and in the summary; `dms.tdep_files(base, data_dir)` gives the same list in Python. Grains colder or hotter than all sets use the coldest or hottest set; DMS warns once per component, with the temperature range of these grains (screen and summary) |
+| `tdep_mode` | `'nearest'` | `'nearest'`: every grain uses the set whose temperature is closest to its own (as in version 2.0); `'linear'`: n and k are interpolated linearly in T between the two sets around the grain temperature (see `tdep_dt`). The choice is made for every grain size, component and distance, also in the temperature calculation, in the radiation pressure (β) and for sublimation |
+| `tdep_dt` | 5 | `'linear'`: DMS adds interpolated data sets between neighbouring sets, spaced by at most `tdep_dt` [K], and every grain uses the closest of them, so n, k are interpolated to within `tdep_dt`/2 of the grain temperature. Each set is one more Mie calculation: fewer, wider steps are faster |
+| `tdep_component` | 0 | input of version 2.0 (still accepted, one component): component that uses temperature-dependent optical data (0 = none); cannot be combined with `tdep` |
+| `tdep_temperatures`, `tdep_files` | | version 2.0: temperatures [K] and files of the data sets of `tdep_component` (any order) |
 | `emt` | `.false.` | create a mixture with an effective-medium rule before the run |
 | `emt_matrix`, `emt_inclusion` | | input files (in `data_dir`) |
 | `emt_volume_fraction` | | volume fraction of the inclusion (0 < f < 1) |

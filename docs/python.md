@@ -55,6 +55,7 @@ writes an input file for the command-line program.
 | `res.tau_radial` | largest radial optical depth in the mid-plane; > 0.1 means the optically thin assumption fails |
 | `res.tau_profile` | vertical optical depth: `r_au`, `mean`, `pericentre`, `apocentre` |
 | `res.temperature` | `r_au`, `T[n_dist, n_component, n_size]` |
+| `res.species` | one entry per optical species: `component` (1-based), `T` [K] (−1 without temperature dependence), `is_data` (False for sets interpolated with `tdep_mode = 'linear'`), `file` |
 | `res.grains` | `a`, `edges`, `number[n_size, n_component]`, `beta` |
 | `res.blowout_beta` | (smallest, largest) blow-out threshold β_crit used; (0, 0) if blow-out is off |
 | `res.luminosity_lsun`, `res.pixel_arcsec`, `res.pixel_au` | |
@@ -133,5 +134,7 @@ and `'uni-bg'` give the same result (both reduce to the coated-sphere formula).
 - `dms.io`: read the output files of the command-line program (`read_image`, `read_sed`,
   `read_profile`, `read_optical_depth`)
 - `dms.plot`: quick-look plots of a Result (`image`, `sed`, `temperature`; needs matplotlib)
+- `dms.tdep_files(base, data_dir=None)`: the data sets `<base>_<T>K[.ext]` that DMS uses for a
+  component with `tdep = .true.`, as a list of (T [K], file) sorted by T
 - `dms.stellar`: build model-atmosphere grids (`build_ck04_grid`, `build_phoenix_grid`,
   `build_blackbody_grid`; also `python -m dms.stellar ...`)

@@ -155,7 +155,8 @@ def write_queue(jobs, queue_dir, overwrite=False, auto_cache=True):
 
 _MIE_KEYS = ("n_components", "optical_data", "size_distribution", "a_min", "a_max", "n_sizes",
              "size_file", "emt", "emt_matrix", "emt_inclusion", "emt_volume_fraction", "emt_rule",
-             "emt_output", "tdep_component", "tdep_temperatures", "tdep_files",
+             "emt_output", "tdep", "tdep_mode", "tdep_dt", "tdep_component", "tdep_temperatures",
+             "tdep_files",
              "grain_shape", "dhs_fmax", "dhs_nf")
 
 
@@ -169,6 +170,21 @@ def _cache_key(p):
     sub["wavelengths"] = p.get("wavelengths", {})
     sub["n_angles"] = p.get("scattering", {}).get("n_angles", 181)
     sub["data_dir"] = p.get("run", {}).get("data_dir", "")
+    # temperature-dependent data: the files found for every base name (a new file changes the key)
+    tdep = d.get("tdep")
+    if tdep is not None:
+        flags = tdep if isinstance(tdep, (list, tuple)) else [tdep]
+        names = d.get("optical_data", [])
+        names = names if isinstance(names, (list, tuple)) else [names]
+        found = []
+        for flag, base in zip(flags, names):
+            if flag:
+                try:
+                    from .model import tdep_files, default_data_dir
+                    found.append(tdep_files(base, sub["data_dir"] or default_data_dir()))
+                except (OSError, ValueError):
+                    found.append(None)
+        sub["tdep_found"] = found
     h = hashlib.sha1(json.dumps(sub, sort_keys=True, default=str).encode()).hexdigest()[:16]
     return "auto_" + h
 

@@ -55,13 +55,30 @@ subroutine summary(run_time)
            real_to_scientific_string(disk_mass / 7.342e22_r2)//" M_moon")
   call say(" Dust")
   do ic = 1, n_grain_components
-    if (switch_Tdep_optics == 1 .and. ic == Tdep_comp) then
-      call say("   component "//integer_to_string(ic)//": temperature-dependent optical data ("// &
-               integer_to_string(n_Tdep)//" sets)")
-    end if
     call say("   component "//integer_to_string(ic)//": "//trim(dustfile_name(ic))//", rho = "// &
              real_to_string(particle_bulk_density(ic))//" g/cm^3, abundance "// &
              real_to_string(100.0_r2 * abun(ic))//" %")
+    if (comp_n_sets(ic) > 1) then
+      if (switch_tdep_mode == 2) then
+        call say("      temperature-dependent optical data, "//integer_to_string(comp_n_sets(ic))// &
+                 " sets, mode 'linear' ("//integer_to_string(comp_n_species(ic))//" species, step <= "// &
+                 real_to_string(tdep_step)//" K):")
+      else
+        call say("      temperature-dependent optical data, "//integer_to_string(comp_n_sets(ic))// &
+                 " sets, mode 'nearest':")
+      end if
+      do k = comp_first_set(ic), comp_first_set(ic) + comp_n_sets(ic) - 1
+        call say("        "//real_to_string(set_T(k))//" K  "//trim(set_file(k)))
+      end do
+      if (comp_T_outside(1, ic) > 0.0_r2) &
+        call say("      warning: grain temperatures "//real_to_string(comp_T_outside(1, ic))//" - "// &
+                 real_to_string(comp_T_outside(2, ic))//" K below the coldest set; that set is used")
+      if (comp_T_outside(3, ic) > 0.0_r2) &
+        call say("      warning: grain temperatures "//real_to_string(comp_T_outside(3, ic))//" - "// &
+                 real_to_string(comp_T_outside(4, ic))//" K above the hottest set; that set is used")
+    else if (trim(set_file(comp_first_set(ic))) /= trim(dustfile_name(ic))) then
+      call say("      optical data: "//trim(set_file(comp_first_set(ic)))//" (the only file found)")
+    end if
     if (switch_sublimation == 1 .and. T_subl(ic) > 0.0_r2) then
       if (subl_to_comp(ic) == 0) then
         call say("      sublimation at "//real_to_string(T_subl(ic))//" K -> vanishes")

@@ -72,6 +72,9 @@ subroutine read_input_file(fname)
   logical  :: emt, sublimation, blowout
   real(r2), dimension(mt) :: tdep_temperatures
   character(len=512), dimension(mt) :: tdep_files
+  logical,  dimension(mc) :: tdep
+  character(len=32) :: tdep_mode
+  real(r2) :: tdep_dt
   ! &scattering
   integer  :: n_angles
   character(len=32) :: phase_function
@@ -89,7 +92,8 @@ subroutine read_input_file(fname)
   namelist /wavelengths/ lambda, lambda_min, lambda_max, n_lambda
   namelist /dust/ n_components, optical_data, bulk_density, abundance, size_distribution, a_min, a_max, q, &
                   n_sizes, size_file, emt, emt_matrix, emt_inclusion, emt_volume_fraction, emt_rule, &
-                  emt_output, tdep_component, tdep_temperatures, tdep_files, sublimation, t_sublimation, &
+                  emt_output, tdep, tdep_mode, tdep_dt, tdep_component, tdep_temperatures, tdep_files, &
+                  sublimation, t_sublimation, &
                   sublimation_residue, blowout, blowout_beta, blowout_release, grain_shape, dhs_fmax, dhs_nf
   namelist /scattering/ n_angles, phase_function, g1, g2, w, p_max
 
@@ -137,6 +141,7 @@ subroutine read_input_file(fname)
   emt = .false.;  emt_matrix = "";  emt_inclusion = "";  emt_volume_fraction = 0.0_r2
   emt_rule = "maxwell-garnett";  emt_output = ""
   tdep_component = 0;  tdep_temperatures = -1.0_r2;  tdep_files = ""
+  tdep = .false.;  tdep_mode = "nearest";  tdep_dt = tdep_step
   sublimation = .false.;  t_sublimation = -1.0_r2;  sublimation_residue = 0;  blowout = .true.
   blowout_beta = -1.0_r2;  blowout_release = 'circular'
   grain_shape = merge('dhs   ', 'sphere', switch_grain_shape == 1);  dhs_fmax = pm_dhs_fmax;  dhs_nf = pm_dhs_nf
@@ -351,7 +356,30 @@ subroutine read_input_file(fname)
   case default;  call dms_fail("&dust emt_rule unknown: "//trim(emt_rule));  return
   end select
 
+  ! temperature-dependent optical data: per component (version 2.1) or the input of version 2.0
+  if (any(tdep(1:n_components)) .and. (tdep_component > 0 .or. any(tdep_temperatures > 0.0_r2) .or. &
+      any(len_trim(tdep_files) > 0))) then
+    call dms_fail("&dust: give either tdep (DMS 2.1) or tdep_component, tdep_temperatures, tdep_files "// &
+                  "(DMS 2.0), not both");  return
+  end if
+  if (any(tdep(n_components+1:mc))) then
+    call dms_fail("&dust tdep: more entries set to .true. than n_components");  return
+  end if
+  allocate(comp_tdep(n_components))
+  comp_tdep(:) = tdep(1:n_components)
+  select case (lower(tdep_mode))
+  case ("nearest");  switch_tdep_mode = 1
+  case ("linear");   switch_tdep_mode = 2
+  case default;  call dms_fail("&dust tdep_mode must be 'nearest' or 'linear'");  return
+  end select
+  if (.not. (tdep_dt > 0.0_r2)) then
+    call dms_fail("&dust tdep_dt must be positive [K]");  return
+  end if
+  tdep_step = tdep_dt
   if (tdep_component > 0) then
+    if (tdep_component > n_components) then
+      call dms_fail("&dust tdep_component must be between 1 and n_components");  return
+    end if
     switch_Tdep_optics = 1
     Tdep_comp = tdep_component
     n_Tdep = count(tdep_temperatures > 0.0_r2)

@@ -347,3 +347,55 @@ subroutine get_cube_angle(npix, ang, ok)
   ang = cube_angle;  ok = 1
 
 end subroutine get_cube_angle
+
+
+subroutine get_nspecies(nsp)
+
+  use parameters
+
+  implicit none
+
+  integer, intent(out) :: nsp
+
+  nsp = 0
+  if (allocated(species_comp)) nsp = n_species
+
+end subroutine get_nspecies
+
+
+subroutine get_species(nsp, comp, temp, is_data)
+
+  ! optical species: component (1-based), temperature tag [K] (-1: no temperature dependence),
+  ! is_data = 1 for a data file, 0 for a species interpolated in T (tdep_mode = 'linear')
+
+  use parameters
+
+  implicit none
+
+  integer, intent(in)                        :: nsp
+  integer, dimension(nsp), intent(out)       :: comp, is_data
+  real(kind=8), dimension(nsp), intent(out)  :: temp
+
+  comp = 0;  temp = -1.0d0;  is_data = 0
+  if (.not. allocated(species_comp)) return
+  comp    = species_comp(1:nsp)
+  temp    = species_T(1:nsp)
+  is_data = merge(1, 0, species_is_data(1:nsp))
+
+end subroutine get_species
+
+
+subroutine get_species_file(isp, fname)
+
+  use parameters
+
+  implicit none
+
+  integer, intent(in)             :: isp
+  character(len=512), intent(out) :: fname
+
+  fname = ""
+  if (.not. allocated(species_file)) return
+  if (isp >= 1 .and. isp <= n_species) fname = species_file(isp)
+
+end subroutine get_species_file

@@ -17,6 +17,8 @@ ifeq ($(FC),f77)
   FC = gfortran
 endif
 PYTHON  ?= python3
+CC      ?= cc
+CFLAGS  ?= -O2
 
 OPT     ?= -O3 -march=native -funroll-loops
 OMP     ?= -fopenmp
@@ -30,14 +32,16 @@ BIN     = bin
 SRC     = src
 
 # modules (dependency order), then the routines; dms.f90 is the program
-MODS    = datatype constants parameters user_density functions mie_routines radiation_calculation \
-          volume_splitting fits_io output_routines obs_tools
+MODS    = datatype constants parameters user_density functions tdep_search mie_routines \
+          radiation_calculation volume_splitting fits_io output_routines obs_tools
 SUBS    = input_setup read_input_file input_questions dms_driver dms_reset dust_mixing pre_cals \
           scattering_angles_cals reading_spectrum reading_temperature_dependent_data mie_cals \
           Qabs_Qsca_S11_S12_cals temperature_distribution_cals particle_abundances belt_normalisation \
           max_temp_diff_cals computing_images observation_products computing_SED optical_depth_cals summary
 
-LIBOBJ  = $(addprefix $(BUILD)/, $(addsuffix .o, $(MODS) $(SUBS)))
+# C helper: directory listing for the files of temperature-dependent optical data
+COBJ    = $(BUILD)/dir_listing.o
+LIBOBJ  = $(addprefix $(BUILD)/, $(addsuffix .o, $(MODS) $(SUBS))) $(COBJ)
 LIB     = $(BUILD)/libdms.a
 
 FFLAGS  = $(OPT) $(OMP) $(STD) $(PIC) -J$(BUILD)
@@ -52,6 +56,9 @@ $(BIN)/dms: $(LIB) $(BUILD)/dms.o | $(BIN)
 $(LIB): $(LIBOBJ)
 	ar rcs $@ $^
 
+$(BUILD)/%.o: $(SRC)/%.c | $(BUILD)
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
 # modules must be compiled in order (each depends on the previous ones)
 $(BUILD)/%.o: $(SRC)/%.f90 | $(BUILD)
 	$(FC) $(FFLAGS) -c $< -o $@
@@ -60,6 +67,7 @@ $(BUILD)/constants.o:             $(BUILD)/datatype.o
 $(BUILD)/parameters.o:            $(BUILD)/constants.o
 $(BUILD)/user_density.o:          $(BUILD)/constants.o
 $(BUILD)/functions.o:             $(BUILD)/parameters.o $(BUILD)/user_density.o
+$(BUILD)/tdep_search.o:           $(BUILD)/datatype.o
 $(BUILD)/mie_routines.o:          $(BUILD)/datatype.o
 $(BUILD)/radiation_calculation.o: $(BUILD)/functions.o
 $(BUILD)/volume_splitting.o:      $(BUILD)/radiation_calculation.o

@@ -26,7 +26,8 @@ detailed user guide is in [docs/manual/dms_manual.pdf](docs/manual/dms_manual.pd
 ## Prerequisites
 
 Install these once, before you download DMS. On every system you need a Fortran compiler with
-OpenMP (gfortran ≥ 10), `make`, and Python ≥ 3.9.
+OpenMP (gfortran ≥ 10), a C compiler (installed together with gfortran on Linux; on macOS with
+`xcode-select --install`), `make`, and Python ≥ 3.9.
 
 | system | compiler and make |
 |---|---|
@@ -279,7 +280,8 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 - Vertical structure: a wedge (fixed opening angle) or a Gaussian profile (h/r)
 - Inclination and position angle
 - Dust: several components, effective-medium mixing (Maxwell-Garnett, Bruggeman, Lichtenecker,
-  Looyenga), temperature-dependent optical constants, sublimation (a component either vanishes
+  Looyenga), temperature-dependent optical constants for any number of components (files found
+  by the temperature in their names; nearest set or n, k interpolated in T), sublimation (a component either vanishes
   or turns into another one), removal of grains blown out by radiation pressure (β ≥ 1/2, or
   the threshold for release at pericentre or apocentre of eccentric belts, or any value)
 - Grain sizes: one size, a power law, or read from a file

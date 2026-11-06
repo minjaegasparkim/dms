@@ -28,7 +28,7 @@ subroutine Qabs_Qsca_S11_S12_cals
   implicit none
 
   integer     :: ntot, it, il, ig, is, ia, ier
-  real(r2)    :: sizepar, qext, qsca, qabs, qbk, qpr, alb, gsc, nn, kk, norm, ct, ph, pp
+  real(r2)    :: sizepar, qext, qsca, qabs, qbk, qpr, alb, gsc, nn, kk, norm, ct, ph, pp, gbytes
   complex(r2) :: ri
   integer     :: mfine, kfwd, nab
   complex(r2), allocatable, dimension(:,:) :: ab
@@ -43,6 +43,15 @@ subroutine Qabs_Qsca_S11_S12_cals
   !========================================================================================
   ! 1. Mie theory at lambda_obs
   !========================================================================================
+
+  ! memory of the scattering matrix (two arrays of n_lambda x n_angles x n_sizes x n_species)
+  if (do_sca .and. verbose) then
+    gbytes = 2.0_r2 * 8.0_r2 * real(n_wavelength_obs, r2) * real(n_angle2, r2) * real(n_grain_radius, r2) * &
+             real(n_species, r2) / 1.0e9_r2
+    if (gbytes > 1.0_r2) print *, "    note: the scattering matrix needs about ", real_to_string(gbytes), &
+      " GB of memory (", n_wavelength_obs, " wavelengths x ", n_angle2, " angles x ", n_grain_radius, &
+      " sizes x ", n_species, " optical species); for thermal emission only use emission = 'thermal'"
+  end if
 
   if (.not. optics_from_cache) then
 
@@ -198,19 +207,20 @@ subroutine Qabs_Qsca_S11_S12_cals
   ! 3. scattering kernels
   !========================================================================================
 
-  allocate(KS11(n_wavelength_obs, n_angle2, n_grain_radius, n_species), &
-           KS12(n_wavelength_obs, n_angle2, n_grain_radius, n_species))
-
+  ! computed in place (the normalised matrix elements are not needed afterwards), so that only two
+  ! arrays of this size exist at a time
   do is = 1, n_species
     do ig = 1, n_grain_radius
       do ia = 1, n_angle2
-        KS11(:, ia, ig, is) = Csca(:, ig, is) * S11_norm(:, ia, ig, is) * pi * Rstar**2 * star_I_obs(:)
-        KS12(:, ia, ig, is) = Csca(:, ig, is) * S12_norm(:, ia, ig, is) * pi * Rstar**2 * star_I_obs(:)
+        S11_norm(:, ia, ig, is) = Csca(:, ig, is) * S11_norm(:, ia, ig, is) * pi * Rstar**2 * star_I_obs(:)
+        S12_norm(:, ia, ig, is) = Csca(:, ig, is) * S12_norm(:, ia, ig, is) * pi * Rstar**2 * star_I_obs(:)
       end do
     end do
   end do
-
-  deallocate(S11_norm, S12_norm)
+  if (allocated(KS11)) deallocate(KS11)
+  if (allocated(KS12)) deallocate(KS12)
+  call move_alloc(S11_norm, KS11)
+  call move_alloc(S12_norm, KS12)
 
 contains
 
