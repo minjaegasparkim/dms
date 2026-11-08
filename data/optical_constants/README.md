@@ -61,3 +61,4 @@ be confirmed.
 | `silXXforYY` | 0.1–4000 | silicate with forsterite (YY %) (?) |
 | `s50mXXiYY`, `a50m50`, `dl_50_50` | 0.09–2000 | mixtures (description to be added) |
 | `ch3oh.txt` | 0.05–1000 | methanol ice (?) |
+| `aice_50K_mastrapa_wb08.txt`, `cice_50K_mastrapa_wb08.txt` | 0.09–2000 | amorphous / crystalline water ice at 50 K for scattered light at 0.4–1.8 micron: `mastrapa/*_50K_hybrid.txt` with the part below 1.111 micron replaced by Warren & Brandt (2008), n shifted to join Mastrapa et al. without a jump (the header of each file gives sources, the shift and its meaning for porosity) |
