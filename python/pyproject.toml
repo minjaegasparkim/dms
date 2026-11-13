@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dms-debris"
-version = "2.1.1"
+version = "2.2.0"
 description = "DMS: thermal emission, scattered light and polarisation of debris disks (Fortran core with Python interface)"
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.22"]

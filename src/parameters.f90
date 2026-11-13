@@ -244,6 +244,52 @@ module parameters
   real(r2), allocatable, dimension(:) :: T_subl                  ! (ic) [K]
   integer,  allocatable, dimension(:) :: subl_to_comp            ! (ic) 0: vanishes, n: becomes n
 
+  ! ice loss by photosputtering (dms 2.2, Grigorieva et al. 2007): a grain of a component with
+  ! ps_Y > 0 loses its ice where the time to sputter it, t_ps = 4 rho_w a / (m_H2O Y N_abs), is
+  ! shorter than the reference time t_ref; it then becomes a grain of ps_to_comp (0: vanishes).
+  !   rho_w = ps_fice rho_bulk (ice mass per grain volume); N_abs = absorbed UV photons per unit
+  !   cross section and time in the band ps_lam1 - ps_lam2
+  !   switch_ps_time: 1 collisional lifetime (Grigorieva et al. 2007, eqs 19-20, vertical optical
+  !                   depth ps_tau_v), 2 P-R drag r^2 c / (2 beta G M*), 3 age ps_age_yr,
+  !                   4 shortest of those that are defined
+  !   switch_ps_absorption: 1 Qabs of the grain, 2 Qabs = 1
+  integer  :: switch_photosputtering = 0
+  real(r2), allocatable, dimension(:) :: ps_Y                    ! (ic) yield [molecules / photon]
+  real(r2), allocatable, dimension(:) :: ps_fice                 ! (ic) ice mass fraction
+  integer,  allocatable, dimension(:) :: ps_to_comp              ! (ic) 0: vanishes, n: becomes n
+  integer  :: switch_ps_time = 4
+  integer  :: switch_ps_absorption = 1
+  ! switch_ps_orbit: 1 local (UV flux at the distance of the grain); 2 release (UV flux averaged over
+  !   the Kepler orbit of the grain after its release from the parent orbit given by
+  !   switch_blowout_release, and the P-R time of that orbit)
+  integer  :: switch_ps_orbit = 1
+  ! eccentric belts with ps_orbit = 'release' (dms 2.2): the ice state depends on the orbit of the
+  ! grains. Each such belt is divided into orbit bins in semi-major axis; a point of the belt takes
+  ! the population of its orbit bin. The kernels of an (orbit bin, distance) pair are stored after
+  ! the n_dist distance entries of j_reem, fl_dist, sig_dist, mfrac_dist and mass_hist ("cells").
+  integer  :: ps_nbins = 32                                      ! bins per eccentric belt (input ps_orbit_bins)
+  logical  :: orbit_mode = .false.                               ! orbit bins in use
+  integer  :: n_obins = 0, n_ocell = 0                           ! orbit bins, cells (all belts)
+  integer,  dimension(max_belts) :: ob_first = 0, ob_count = 0   ! first bin, bins of belt k
+  integer,  allocatable, dimension(:) :: ob_belt, ob_idlo, ob_idhi, ob_off      ! (ob)
+  real(r2), allocatable, dimension(:) :: ob_alo, ob_ahi          ! (ob) edges in a [m]
+  logical,  allocatable, dimension(:,:,:) :: ps_lost_ob          ! (ig, ic, ob) ice lost
+  integer,  allocatable, dimension(:,:,:) :: dest_keep, dest_lost   ! (ig, ic, id) final component
+                                                                 !  of a grain of ic (0: gone)
+  real(r2), allocatable, dimension(:,:) :: npm_init              ! (ig, ic) initial grains per kg
+  real(r2), allocatable, dimension(:,:) :: ps_aloss              ! (ig, ic) largest a with ice
+                                                                 !  loss [m]; 0 none; -1 no ice
+  real(r2) :: ps_tau_v = 0.0_r2                                  ! vertical optical depth
+  real(r2) :: ps_age_yr = 0.0_r2                                 ! [yr]
+  real(r2) :: ps_isrf_flux = 0.0_r2                              ! interstellar photons [/m^2/s]
+  real(r2) :: ps_lam1 = 0.0912_r2, ps_lam2 = 0.2431_r2           ! band [micron] (13.6 - 5.1 eV)
+  character(len=512) :: ps_uv_name = ""                          ! UV spectrum (micron, Jy at d)
+  real(r2) :: ps_photons_1au = 0.0_r2                            ! band photon flux at 1 au [/m^2/s]
+  integer  :: ps_n_model = 0                                     ! band points not in ps_uv_file
+  logical  :: ps_q_extrap = .false.                              ! band outside the optical data
+  real(r2), allocatable, dimension(:,:) :: ps_rloss              ! (ig, ic) largest distance with
+                                                                 !  ice loss [m]; 0 none; -1 no ice
+
   integer  :: switch_blowout
 
   ! blow-out threshold: grains with beta >= beta_crit are removed. Parent bodies on an orbit with
@@ -254,6 +300,7 @@ module parameters
   integer  :: switch_blowout_release = 1
   real(r2) :: blowout_beta_user = -1.0_r2
   real(r2), allocatable, dimension(:) :: beta_crit_dist          ! (id) threshold at every distance
+  real(r2), allocatable, dimension(:) :: ecc_parent_dist         ! (id) e of the parent orbits there
   real(r2) :: beta_crit_min = 0.5_r2, beta_crit_max = 0.5_r2
 
   ! grain shape: 0 = homogeneous spheres (Mie); 1 = distribution of hollow spheres (DHS, Min et al.

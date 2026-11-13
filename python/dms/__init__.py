@@ -11,7 +11,7 @@ from .model import Model, Result, DMSError, SizeGridWarning, default_data_dir, t
 from .namelist import read_namelist, write_namelist
 from . import io, plot, stellar, batch, emc
 
-__version__ = "2.1.1"
+__version__ = "2.2.0"
 
 __all__ = ["Model", "Result", "DMSError", "SizeGridWarning", "default_data_dir", "tdep_files", "read_namelist",
            "write_namelist",

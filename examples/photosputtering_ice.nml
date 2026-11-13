@@ -1,0 +1,35 @@
+! DMS example: ice/silicate grains that lose their ice by sublimation (110 K) and by photosputtering
+! (DMS 2.2; Grigorieva et al. 2007); the residue is porous silicate; SED only
+!   bin/dms examples/photosputtering_ice.nml
+! The summary lists, for every grain size, the largest distance at which the ice is lost.
+
+&run
+  mode = 'sed',  emission = 'both',  output_name = 'photosputtering'
+/
+&star
+  teff = 5770.,  radius = 1.0,  mass = 1.0,  distance = 10.
+/
+&disk
+  density_law = 'powerlaw',  alpha = 1.0,  r_in = 3.,  r_out = 200.
+  opening_angle = 5.,  dust_mass = 1.0e-7,  inclination = 0.
+/
+&wavelengths
+  lambda_min = 0.4,  lambda_max = 1000.,  n_lambda = 60
+/
+&dust
+  n_components = 2
+  optical_data = 'kim2019/ice_astrosilicate_MG/Sil50cice50',  'kim2019/porous_astrosilicate/as50vac50'
+  bulk_density = 2.25,  1.75          ! by volume: 0.5 x 3.5 (silicate) + 0.5 x 1.0 (ice); 0.5 x 3.5
+  abundance    = 1.,  0.               ! the porous silicate only forms by losing ice
+  a_min = 0.1,  a_max = 1000.,  q = 3.5,  n_sizes = 120
+  sublimation = .true.
+  t_sublimation       = 110.,  -1.     ! component 1 sublimates at 110 K, component 2 never
+  sublimation_residue = 2,     0
+  photosputtering = .true.
+  ps_yield        = 1.e-3,  0.         ! H2O molecules per absorbed UV photon
+  ps_ice_fraction = 0.222,  1.         ! ice mass fraction: 0.5 x 1.0 / 2.25
+  ps_residue      = 2,      0          ! component 1 becomes component 2
+  ps_time = 'shortest'                 ! collisions (ps_tau) and P-R drag
+  ps_tau  = 2.e-3                      ! vertical optical depth of this disk (tau_peak of a first run)
+  ps_orbit = 'release'                 ! UV and P-R time of the orbit after release
+/

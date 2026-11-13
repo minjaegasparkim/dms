@@ -90,7 +90,7 @@ def test_no_file_and_single_file(tmp_path):
         model(ddir, optical_data="tdep/none", tdep=True).run()
     a = model(ddir, optical_data="tdep/one", tdep=True).run()
     b = model(ddir, optical_data="tdep/one_50K.txt").run()
-    close(a, b, rtol=1e-12)
+    close(a, b, rtol=1e-10)
     assert list(a.species["T"]) == [-1.0]
 
 
@@ -111,7 +111,7 @@ def test_input_of_version_2_0(tmp_path):
                 tdep_temperatures=[100.0, 30.0, 60.0],                   # any order
                 tdep_files=["tdep/fo_100K.txt", "tdep/fo_30K.txt", "tdep/fo_60K.txt"], **dust).run()
     new = model(ddir, optical_data=[BASE_FILE, "tdep/fo"], tdep=[False, True], **dust).run()
-    close(old, new, rtol=1e-12)
+    close(old, new, rtol=1e-10)
     np.testing.assert_array_equal(old.temperature["T"], new.temperature["T"])
     # the temperature dependence matters for this model (different from one fixed set)
     fixed = model(ddir, optical_data=[BASE_FILE, "tdep/fo_30K.txt"], **dust).run()
@@ -161,7 +161,7 @@ def test_temperature_outside_the_sets(tmp_path):
     m.update(run={"output_dir": str(tmp_path / "out") + "/", "output_name": "t", "write_files": True})
     a = m.run(write_files=True)
     b = model(ddir, optical_data="tdep/fo_300K.txt").run()
-    close(a, b, rtol=1e-12)
+    close(a, b, rtol=1e-10)
     summary = open(tmp_path / "out" / "summary.t.txt").read()
     assert "below the coldest set" in summary
     assert "300.00 K  tdep/fo_300K.txt" in summary

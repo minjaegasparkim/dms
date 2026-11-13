@@ -1,5 +1,58 @@
 # Changelog
 
+## 2.2.0 (2026-11) – ice loss by photosputtering
+
+- **New `&dust photosputtering` (default off).** UV photons sputter water molecules off icy grains
+  (Grigorieva et al. 2007, A&A 475, 755). A grain of a component with `ps_yield` > 0 loses its ice
+  where the sputtering time t_ps = 4 ρ_w a / (m_H₂O Y N_abs) is shorter than a reference time; it
+  then becomes a grain of `ps_residue` (or vanishes), as for sublimation. The test is made for
+  every grain size and distance, so small grains, which lose their ice first (t_ps ∝ a), are
+  treated separately from large ones.
+  - N_abs: absorbed photons in 5.1–13.6 eV (`ps_band`) from the stellar spectrum of the run, or from
+    a UV spectrum `ps_uv_file` (for the chromospheric UV of K and M stars, which stellar models lack),
+    plus an optional interstellar field `ps_isrf`. Q(λ) is the absorption efficiency of the grain
+    (`ps_absorption = 'grain'`) or 1.
+  - Reference time `ps_time`: the collisional lifetime of Grigorieva et al. (eqs 19–20) with the
+    vertical optical depth `ps_tau`, the P-R drag time r² c / (2β G M*), the age `ps_age`, or the
+    shortest of these (default).
+  - `ps_orbit = 'release'` (default `'local'`): the UV flux averaged over the Kepler orbit a grain
+    follows after its release from the parent orbit (circular, or pericentre/apocentre of the belt
+    as in `blowout_release`), with the P-R time of that orbit (Wyatt & Whipple 1950). For release
+    from circular orbits this lowers the UV by (1−2β)^{3/2}/(1−β): 0.80, 0.58 and 0.15 at β = 0.1,
+    0.2 and 0.4. Analytic orbits only; the grains stay at their release distance.
+  - **Eccentric belts: ice state per orbit.** With `ps_orbit = 'release'`, every eccentric belt is
+    divided into `ps_orbit_bins` bins in semi-major axis (default 32) and the ice is decided per
+    orbit (parent orbit a, e of the belt; release as in `blowout_release`; Kepler frequency at a).
+    A point of the belt takes the population of the orbit through it, so the grains of one orbit
+    keep or lose their ice all round the belt; temperatures, sublimation and blow-out stay
+    functions of the distance. The kernels of every (orbit bin, distance) pair are stored after the
+    distance entries (new module `src/orbit_populations.f90`); SED, images, belt normalisation,
+    optical depth and grain numbers use them. Circular belts are unchanged. Python
+    `res.photosputtering['a_ice_loss']`. Checked: with no ice lost the orbit bins reproduce the
+    run without photosputtering to 1e-10 (two belts, SED and images); for e → 0 they reproduce
+    the circular belt; the ice-loss semi-major axis follows the analytic orbit average; energy
+    balance and images against the SED quadrature.
+  - Inputs per component: `ps_yield` (Grigorieva et al. take 10⁻³), `ps_ice_fraction` (ice mass
+    fraction), `ps_residue`.
+  - Output: the largest distance at which each grain size loses its ice (summary; Python
+    `res.photosputtering['r_ice_loss']`) and the UV photon flux at 1 au. FITS header card `PHOTOSP`.
+  - Checked against the analytic ice-loss radius (age mode, Q = 1) to 1e-3 and against an
+    independent integral of the black-body photon flux; tests in `tests/test_photosputtering.py`.
+  - Grains above the blow-out threshold are not tested: they leave within an orbit and are removed
+    by blow-out as they are.
+  - Example 4 (`examples/4_ice_loss.ipynb`): sublimation only, photosputtering against collisions
+    and P-R drag (local and release orbits) and against P-R drag alone; the ice-loss radius of every
+    grain size and the SEDs; an eccentric belt with the ice decided locally and per orbit.
+    Input-file example `examples/photosputtering_ice.nml` (also a regression model).
+  - Without photosputtering the results are unchanged (the radiation-pressure β is now computed
+    before sublimation; the order of the operations on the grains is otherwise the same).
+- Tests: comparisons between two runs of the same model now use a relative tolerance of 1e-10
+  (was 1e-12). On a busy machine the order of the OpenMP sums changes results by up to ~2e-12 in
+  the far Wien tail (fluxes of 1e-49 Jy), which made the DHS tests fail now and then.
+- **Code map** `docs/images/code_map.pdf` (`.svg`, `.png`; source `code_map.dot`): the steps of a run
+  with the source files and main routines of each step, the entry points and the Python modules;
+  also in the manual (Fig. 4).
+
 ## 2.1.1 (2026-11) – faster DHS for large grains
 
 - **New `&dust dhs_xmax` (default 1000), which changes the default results of

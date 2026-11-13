@@ -42,3 +42,4 @@ docs/manual/cover/out/
 # output of the example notebooks (examples/*.ipynb)
 parameter_study/
 .ipynb_checkpoints/
+data/optical_constants/mixtures/

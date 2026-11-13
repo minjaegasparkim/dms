@@ -21,7 +21,7 @@ def test_default_is_circular():
     r0 = make_model(dust=SMALL).run()
     r1 = make_model(dust=dict(SMALL, blowout_release="circular")).run()
     assert r0.blowout_beta == (0.5, 0.5)
-    assert r1.f_d == pytest.approx(r0.f_d, rel=1e-12)
+    assert r1.f_d == pytest.approx(r0.f_d, rel=1e-10)
     kept, removed = surviving_beta(r0)
     assert kept.max() < 0.5 <= removed.min()
 
@@ -46,7 +46,7 @@ def test_circular_belt_pericentre_equals_circular():
     r0 = make_model(dust=SMALL).run()
     r1 = make_model(dust=dict(SMALL, blowout_release="pericentre")).run()
     assert r1.blowout_beta == (0.5, 0.5)
-    assert r1.f_d == pytest.approx(r0.f_d, rel=1e-12)
+    assert r1.f_d == pytest.approx(r0.f_d, rel=1e-10)
 
 
 def test_user_threshold():

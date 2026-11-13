@@ -166,6 +166,12 @@ class Result:
     pixel_arcsec, pixel_au : image sampling (images only)
     tau_profile : dict r_au, mean, pericentre, apocentre (vertical geometrical optical depth)
     grains : dict a, edges, number[n_size, n_comp], beta[n_size, n_comp]
+    photosputtering : None, or dict r_ice_loss[n_size, n_comp] (largest distance [au] at which the
+        grains lose their ice; 0 nowhere, -1 component without photosputtering) and photons_1au
+        (UV photon flux in the band at 1 au [photons/cm^2/s]); with orbit bins (eccentric belts,
+        ps_orbit = 'release') also a_ice_loss[n_size, n_comp] (largest semi-major axis [au] of the
+        eccentric-belt orbits on which the grains lose their ice; r_ice_loss then applies to the
+        circular belts) and orbit_bins
     temperature : dict r_au, T[n_dist, n_comp, n_size]
     species : dict component[n_sp] (1-based), T[n_sp] (K, -1 without temperature dependence),
               is_data[n_sp] (False for species interpolated in T, tdep_mode = 'linear'),
@@ -201,6 +207,14 @@ class Result:
         a, edges, number, beta = _dms.get_grains(ngr, ncomp)
         r.grains = {"a": np.array(a), "edges": np.array(edges), "number": np.array(number),
                     "beta": np.array(beta)}
+        rloss, aloss, photons, nbins = _dms.get_photosputtering(ngr, ncomp)
+        rloss = np.array(rloss)
+        if np.all(rloss < 0):
+            r.photosputtering = None
+        else:
+            r.photosputtering = {"r_ice_loss": rloss, "photons_1au": float(photons)}
+            if nbins > 0:
+                r.photosputtering.update(a_ice_loss=np.array(aloss), orbit_bins=int(nbins))
         r_au, temp = _dms.get_temperature(ndist, ngr, ncomp)
         r.temperature = {"r_au": np.array(r_au), "T": np.transpose(temp, (2, 1, 0)).copy()}
         nsp = int(_dms.get_nspecies())

@@ -14,7 +14,8 @@ subroutine summary(run_time)
 
   real(r2), intent(in) :: run_time               ! [s]
 
-  integer :: u, ic, il, k
+  integer :: u, ic, il, k, ig
+  character(len=:), allocatable :: ps_txt
   character(len=:), allocatable :: fname, ext
 
   if (.not. (verbose .or. write_output)) return
@@ -87,7 +88,72 @@ subroutine summary(run_time)
                  integer_to_string(subl_to_comp(ic)))
       end if
     end if
+    if (switch_photosputtering == 1 .and. allocated(ps_rloss)) then
+      if (ps_Y(ic) > 0.0_r2) then
+        if (ps_to_comp(ic) == 0) then
+          call say("      photosputtering: Y = "//real_to_string(ps_Y(ic))//", ice mass fraction "// &
+                   real_to_string(ps_fice(ic))//" -> vanishes")
+        else
+          call say("      photosputtering: Y = "//real_to_string(ps_Y(ic))//", ice mass fraction "// &
+                   real_to_string(ps_fice(ic))//" -> becomes component "//integer_to_string(ps_to_comp(ic)))
+        end if
+        k = max(1, n_grain_radius / 8)
+        if (orbit_mode) then
+          call say("        ice lost on orbits out to (a [micron]: semi-major axis [au] in the eccentric "// &
+                   "belt(s); distance [au] in circular belts):")
+          do ig = 1, n_grain_radius, k
+            call say("          "//real_to_string(rad(ig))//": "//real_to_string(max(ps_aloss(ig, ic), 0.0_r2) / au)// &
+                     "; "//real_to_string(max(ps_rloss(ig, ic), 0.0_r2) / au))
+          end do
+          if (mod(n_grain_radius - 1, k) /= 0) call say("          "//real_to_string(rad(n_grain_radius))//": "// &
+                   real_to_string(max(ps_aloss(n_grain_radius, ic), 0.0_r2) / au)//"; "// &
+                   real_to_string(max(ps_rloss(n_grain_radius, ic), 0.0_r2) / au))
+        else
+          call say("        ice lost out to (a [micron]: r [au]):")
+          do ig = 1, n_grain_radius, k
+            call say("          "//real_to_string(rad(ig))//": "//real_to_string(max(ps_rloss(ig, ic), 0.0_r2) / au))
+          end do
+          if (mod(n_grain_radius - 1, k) /= 0) call say("          "//real_to_string(rad(n_grain_radius))//": "// &
+                   real_to_string(max(ps_rloss(n_grain_radius, ic), 0.0_r2) / au))
+        end if
+      end if
+    end if
   end do
+  if (switch_photosputtering == 1) then
+    select case (switch_ps_time)
+    case (1);  ps_txt = "collisional lifetime (tau = "//real_to_string(ps_tau_v)//")"
+    case (2);  ps_txt = "P-R drag time"
+    case (3);  ps_txt = "age "//real_to_string(ps_age_yr)//" yr"
+    case default
+      ps_txt = "shortest of P-R drag time"
+      if (ps_tau_v > 0.0_r2) ps_txt = ps_txt//", collisional lifetime (tau = "//real_to_string(ps_tau_v)//")"
+      if (ps_age_yr > 0.0_r2) ps_txt = ps_txt//", age "//real_to_string(ps_age_yr)//" yr"
+    end select
+    call say("   photosputtering: ice lost where the sputtering time < "//ps_txt)
+    call say("     band "//real_to_string(ps_lam1)//" - "//real_to_string(ps_lam2)//" micron, "// &
+             real_to_string(ps_photons_1au * 1.0e-4_r2)//" photons/cm^2/s at 1 au, absorption "// &
+             trim(merge("Qabs of the grain", "Qabs = 1         ", switch_ps_absorption == 1)))
+    if (switch_ps_orbit == 2) then
+      select case (switch_blowout_release)
+      case (2);      ps_txt = "release at the pericentre of the belt orbits"
+      case (3);      ps_txt = "release at the apocentre of the belt orbits"
+      case default;  ps_txt = "release from circular orbits"
+      end select
+      call say("     orbit: UV and P-R time averaged over the grain orbit after "//ps_txt)
+      if (orbit_mode) call say("     eccentric belt(s): ice state per orbit, "//integer_to_string(n_obins)// &
+                               " orbit bins in semi-major axis")
+    else
+      call say("     orbit: UV at the distance of the grain (local)")
+    end if
+    if (len_trim(ps_uv_name) > 0) call say("     UV spectrum: "//trim(ps_uv_name))
+    if (ps_isrf_flux > 0.0_r2) call say("     interstellar UV: "//real_to_string(ps_isrf_flux * 1.0e-4_r2)// &
+                                        " photons/cm^2/s")
+    if (ps_n_model > 0) call say("     note: the UV spectrum does not cover the whole band; stellar model used there")
+    if (ps_q_extrap .and. switch_ps_absorption == 1) &
+      call say("     note: the band extends beyond the optical data; Qabs at the nearest wavelength used")
+    if (len_trim(ps_uv_name) == 0 .and. switch_BB_or_readingspec /= 2 .and. Tstar < 6000.0_r2) &
+      call say("     note: photospheric UV only; the chromospheric UV of cool stars is not included")
+  end if
   if (switch_blowout == 1) then
     if (beta_crit_max - beta_crit_min > 1.0e-12_r2) then
       call say("   blow-out: grains with beta >= "//real_to_string(beta_crit_min)//" - "// &

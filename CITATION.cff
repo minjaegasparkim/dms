@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use DMS, please cite the paper below."
 title: "DMS: Debris disks around Main-sequence Stars"
 type: software
-version: 2.1.1
+version: 2.2.0
 license: BSD-3-Clause
 repository-code: "https://github.com/minjaegasparkim/dms"
 authors:

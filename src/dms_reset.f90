@@ -60,6 +60,20 @@ subroutine dms_reset
   if (allocated(T1_dist)) deallocate(T1_dist)
   if (allocated(T_subl)) deallocate(T_subl)
   if (allocated(subl_to_comp)) deallocate(subl_to_comp)
+  if (allocated(ps_Y)) deallocate(ps_Y)
+  if (allocated(ps_fice)) deallocate(ps_fice)
+  if (allocated(ps_to_comp)) deallocate(ps_to_comp)
+  if (allocated(ps_rloss)) deallocate(ps_rloss)
+  if (allocated(ecc_parent_dist)) deallocate(ecc_parent_dist)
+  if (allocated(ob_belt)) deallocate(ob_belt, ob_idlo, ob_idhi, ob_off, ob_alo, ob_ahi)
+  if (allocated(ps_lost_ob)) deallocate(ps_lost_ob)
+  if (allocated(dest_keep)) deallocate(dest_keep)
+  if (allocated(dest_lost)) deallocate(dest_lost)
+  if (allocated(npm_init)) deallocate(npm_init)
+  if (allocated(ps_aloss)) deallocate(ps_aloss)
+  orbit_mode = .false.;  n_obins = 0;  n_ocell = 0;  ob_first = 0;  ob_count = 0;  ps_nbins = 32
+  switch_ps_orbit = 1
+  switch_photosputtering = 0;  ps_photons_1au = 0.0_r2
   if (allocated(beta_rp)) deallocate(beta_rp)
   if (allocated(beta_crit_dist)) deallocate(beta_crit_dist)
   if (allocated(npm)) deallocate(npm)

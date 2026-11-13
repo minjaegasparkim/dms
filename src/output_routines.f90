@@ -59,6 +59,7 @@ contains
     call fits_card_real(hdr, 'QSIZE',    q_size,             'size distribution exponent')
     call fits_card_int (hdr, 'PHASEFN',  switch_phase_function, '1 Mie, 2 HG, 3 two-component HG')
     call fits_card_int (hdr, 'SUBLIM',   switch_sublimation, 'sublimation 0/1')
+    call fits_card_int (hdr, 'PHOTOSP',  switch_photosputtering, 'photosputtering 0/1')
     call fits_card_int (hdr, 'BLOWOUT',  switch_blowout,     'blow-out removal 0/1')
     if (switch_blowout == 1) then
       call fits_card_real(hdr, 'BETACMIN', beta_crit_min,    'smallest blow-out threshold beta')

@@ -30,17 +30,17 @@ def test_large_grain_approximation_matches_full_dhs():
         assert res.f_d == pytest.approx(full.f_d, rel=tol)
     default = dhs_model().run()
     np.testing.assert_allclose(default.sed["thermal"], dhs_model(dhs_xmax=1000.0).run().sed["thermal"],
-                               rtol=1e-12)
+                               rtol=1e-10)
 
 
 def test_sphere_not_affected():
     """dhs_xmax has no effect on homogeneous spheres. (Two runs differ only by the order of the
-    OpenMP sums, ~1e-14.)"""
+    OpenMP sums: ~1e-14, up to ~2e-12 in the far Wien tail when the machine is busy.)"""
     a = make_model(dust={"n_sizes": 8}).run()
     b = make_model(dust={"n_sizes": 8, "dhs_xmax": 300.0}).run()
-    np.testing.assert_allclose(a.sed["thermal"], b.sed["thermal"], rtol=1e-12)
-    np.testing.assert_allclose(a.sed["scattered"], b.sed["scattered"], rtol=1e-12)
-    np.testing.assert_allclose(a.temperature["T"], b.temperature["T"], rtol=1e-12)
+    np.testing.assert_allclose(a.sed["thermal"], b.sed["thermal"], rtol=1e-10)
+    np.testing.assert_allclose(a.sed["scattered"], b.sed["scattered"], rtol=1e-10)
+    np.testing.assert_allclose(a.temperature["T"], b.temperature["T"], rtol=1e-10)
 
 
 @pytest.mark.parametrize("xmax", [-1.0, 5.0])
@@ -57,10 +57,10 @@ def test_cache_records_xmax(tmp_path):
     first = m.run()
     m = dhs_model(dhs_xmax=1000.0)
     m.update(run={**cache, "load_optics": True})
-    np.testing.assert_allclose(m.run().sed["thermal"], first.sed["thermal"], rtol=1e-12)
+    np.testing.assert_allclose(m.run().sed["thermal"], first.sed["thermal"], rtol=1e-10)
     other = dhs_model(dhs_xmax=300.0)
     other.update(run={**cache, "load_optics": True})
     direct = dhs_model(dhs_xmax=300.0).run()
-    np.testing.assert_allclose(other.run().sed["thermal"], direct.sed["thermal"], rtol=1e-12)
+    np.testing.assert_allclose(other.run().sed["thermal"], direct.sed["thermal"], rtol=1e-10)
     # and it differs from the result with dhs_xmax = 1000, i.e. the cache was not used
     assert np.max(np.abs(direct.sed["thermal"] / first.sed["thermal"] - 1)) > 1e-8

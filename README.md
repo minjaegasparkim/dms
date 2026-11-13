@@ -242,6 +242,40 @@ sharp lower edge of the size distribution leaves Mie oscillations in its curves.
 
 <p align="center"><img src="docs/images/parameter_study.png" width="100%" alt="Degree of polarisation against wavelength and scattering angle for the 12 models of the parameter study"></p>
 
+## Example 4: ice loss by sublimation and photosputtering
+
+Icy grains (silicate with 50 % crystalline water ice by volume) in a disk from 3 to 200 au around
+a solar-type star lose their ice where they are warmer than 110 K (sublimation) and where UV
+photons remove it faster than the grains are destroyed by collisions or removed by P-R drag
+(photosputtering, Grigorieva et al. 2007; `photosputtering = .true.` in `&dust`). The ice-free
+remainder becomes porous silicate.
+
+```python
+dust = {"photosputtering": True,
+        "ps_yield": [1e-3, 0.0],            # H2O molecules per absorbed UV photon
+        "ps_ice_fraction": [0.222, 1.0],    # ice mass fraction of each component
+        "ps_residue": [2, 0],               # the icy component becomes component 2
+        "ps_time": "shortest", "ps_tau": 2e-3,   # collisions (vertical optical depth) and P-R drag
+        "ps_orbit": "release"}              # UV averaged over the orbit after release
+res = model.update(dust=dust).run()
+res.photosputtering["r_ice_loss"]           # [size, component]: ice lost out to this distance [au]
+```
+
+The notebook [examples/4_ice_loss.ipynb](examples/4_ice_loss.ipynb) runs four models in about
+half a minute: sublimation only; photosputtering against collisions and P-R drag (local and
+release orbits); and against P-R drag alone (a faint disk). The smallest bound grains lose their
+ice everywhere, larger grains keep it outside a few to a few tens of au, and with P-R drag alone
+every size loses it. The SEDs show what this does to the scattered light and the 3 µm ice band.
+
+<p align="center"><img src="docs/images/ice_loss.png" width="100%" alt="Ice-loss radius against grain size and the SEDs of the four models of example 4"></p>
+
+In an eccentric belt the ice of a grain depends on its orbit: with `ps_orbit = 'release'` DMS
+divides the belt into bins in semi-major axis and decides the ice per orbit, so the population
+follows the orbits of the belt instead of the distance from the star (below: scattered light
+3.1 / 2.0 µm of a belt with e = 0.3).
+
+<p align="center"><img src="docs/images/ice_loss_eccentric.png" width="80%" alt="Ratio of the scattered light at 3.1 and 2.0 micron of an eccentric belt with the ice decided locally and per orbit"></p>
+
 ## The command-line program
 
 ```bash
@@ -264,12 +298,14 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 | [examples/1_first_model.ipynb](examples/1_first_model.ipynb) | Example 1: SED and images of a ring, changing a model |
 | [examples/2_two_belts_observed.ipynb](examples/2_two_belts_observed.ipynb) | Example 2: two belts, icy grains with sublimation, PSF and coronagraph mask |
 | [examples/3_parameter_study.ipynb](examples/3_parameter_study.ipynb) | Example 3: a grid of 12 models run in parallel with `dms.batch` |
+| [examples/4_ice_loss.ipynb](examples/4_ice_loss.ipynb) | Example 4: ice loss by sublimation and photosputtering, against collisions and P-R drag |
 | [examples/debris_ring.nml](examples/debris_ring.nml) | a ring around a solar-type star: images and SED |
 | [examples/eccentric_ring.nml](examples/eccentric_ring.nml) | an eccentric ring (e = 0.3): pericentre and apocentre glow |
 | [examples/two_belts.nml](examples/two_belts.nml) | a warm inner belt and an eccentric cold outer belt |
 | [examples/edge_on_disk.nml](examples/edge_on_disk.nml) | an edge-on disk in scattered light with a PSF and a coronagraph mask |
 | [examples/polarisation_hg.nml](examples/polarisation_hg.nml) | polarisation with a two-component Henyey–Greenstein phase function |
 | [examples/sublimation_ice.nml](examples/sublimation_ice.nml) | ice–silicate grains that lose their ice inside the sublimation radius |
+| [examples/photosputtering_ice.nml](examples/photosputtering_ice.nml) | the same with photosputtering (release orbits, collisions and P-R drag): the ice-loss radius of every grain size in the summary |
 | [examples/clump_user_density.nml](examples/clump_user_density.nml) | a user-defined density: a ring with a clump |
 
 ## Features
@@ -282,7 +318,8 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 - Dust: several components, effective-medium mixing (Maxwell-Garnett, Bruggeman, Lichtenecker,
   Looyenga), temperature-dependent optical constants for any number of components (files found
   by the temperature in their names; nearest set or n, k interpolated in T), sublimation (a component either vanishes
-  or turns into another one), removal of grains blown out by radiation pressure (β ≥ 1/2, or
+  or turns into another one), ice loss by photosputtering for every grain size and distance
+  (Grigorieva et al. 2007; against the collisional lifetime, the P-R drag time or the age), removal of grains blown out by radiation pressure (β ≥ 1/2, or
   the threshold for release at pericentre or apocentre of eccentric belts, or any value)
 - Grain sizes: one size, a power law, or read from a file
 - Grain shape: homogeneous spheres (Mie) or a distribution of hollow spheres (DHS, Min et al. 2005)
@@ -303,7 +340,7 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 src/                    Fortran source (modules, routines, main program dms.f90)
 src/user_density.f90    edit this file to define your own density distribution
 python/                 Python package "dms" and the f2py interface (dms_api.f90)
-examples/               example notebooks (0–3) and input files (namelists)
+examples/               example notebooks (0–4) and input files (namelists)
 data/optical_constants/ optical constants n, k (wavelength [micron], n, k)
 data/stellar_models/    model-atmosphere grids (created with python -m dms.stellar)
 docs/                   input reference, outputs, conventions, Python interface, manual
@@ -315,6 +352,12 @@ tools/                  setup check (check_setup.py), quick-look plots, optical-
 At runtime, `results/` (output files) and `cache/` (saved optical properties) are created in
 the working directory. You can change all directories in the input file (`&run`).
 
+[docs/images/code_map.pdf](docs/images/code_map.pdf) (also `.svg`, `.png`) shows the steps of a
+run in the order in which `src/dms_driver.f90` calls them, with the source files and main routines
+of each step, the entry points (command line, Python, `dms.batch`), the shared modules and the
+Python modules used before and after a run. Its source is `docs/images/code_map.dot`
+(`dot -Tpdf docs/images/code_map.dot -o docs/images/code_map.pdf`).
+
 ## Documentation
 
 - [docs/manual/dms_manual.pdf](docs/manual/dms_manual.pdf): reference manual and user guide
@@ -323,6 +366,7 @@ the working directory. You can change all directories in the input file (`&run`)
 - [docs/input_reference.md](docs/input_reference.md): every input parameter, with units and defaults
 - [docs/outputs.md](docs/outputs.md): output files and units
 - [docs/conventions.md](docs/conventions.md): coordinate frames, eccentric belts, polarisation signs
+- [docs/images/code_map.pdf](docs/images/code_map.pdf): the steps of a run and the source files of each step
 - [docs/manual/cover/images/](docs/manual/cover/images/): the images on the manual cover, computed with DMS
 - [CHANGELOG.md](CHANGELOG.md): changes with respect to the 2019 version
 

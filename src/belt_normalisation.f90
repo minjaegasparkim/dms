@@ -13,12 +13,13 @@ subroutine belt_normalisation
   use constants
   use parameters
   use functions
+  use orbit_populations
 
   implicit none
 
   integer, parameter :: n_r = 800, n_b = 48, n_p = 360
   integer  :: k, ir, ib, ip
-  real(r2) :: ra, rb, rc, b1, b2, bc, psic, dpsi, dV, X, Y, Zd, r_lo, r_hi, mk
+  real(r2) :: ra, rb, rc, b1, b2, bc, psic, dpsi, dV, X, Y, Zd, r_lo, r_hi, mk, rk, ak
 
   belt_amp(:) = 1.0_r2
   if (n_belts == 1) return
@@ -32,7 +33,7 @@ subroutine belt_normalisation
     if (switch_vertical == 2) r_hi = r_hi / cos(open_angle)
 
     mk = 0.0_r2
-    !$omp parallel do schedule(static) collapse(2) private(ir, ib, ip, ra, rb, rc, b1, b2, bc, psic, dV, X, Y, Zd) &
+    !$omp parallel do schedule(static) collapse(2) private(ir, ib, ip, ra, rb, rc, b1, b2, bc, psic, dV, X, Y, Zd, rk, ak) &
     !$omp reduction(+:mk)
     do ir = 1, n_r
       do ib = 1, n_b
@@ -48,7 +49,13 @@ subroutine belt_normalisation
           X  = rc * cos(bc) * sin(psic)
           Y  = rc * cos(bc) * cos(psic)
           Zd = rc * sin(bc)
-          mk = mk + density_belt(X, Y, Zd, k) * mfrac_dist(dist_index(rc)) * dV
+          if (ob_count(k) > 0) then
+            ! eccentric belt with orbit bins: surviving mass of the orbit through the point
+            call belt_point(X, Y, Zd, k, rk, ak)
+            if (rk > 0.0_r2) mk = mk + rk * mfrac_dist(cell_index(orbit_bin(k, ak), dist_index(rc))) * dV
+          else
+            mk = mk + density_belt(X, Y, Zd, k) * mfrac_dist(dist_index(rc)) * dV
+          end if
         end do
       end do
     end do

@@ -32,8 +32,8 @@ BIN     = bin
 SRC     = src
 
 # modules (dependency order), then the routines; dms.f90 is the program
-MODS    = datatype constants parameters user_density functions tdep_search mie_routines \
-          radiation_calculation volume_splitting fits_io output_routines obs_tools
+MODS    = datatype constants parameters user_density functions orbit_populations tdep_search \
+          mie_routines radiation_calculation volume_splitting fits_io output_routines obs_tools
 SUBS    = input_setup read_input_file input_questions dms_driver dms_reset dust_mixing pre_cals \
           scattering_angles_cals reading_spectrum reading_temperature_dependent_data mie_cals \
           Qabs_Qsca_S11_S12_cals temperature_distribution_cals particle_abundances belt_normalisation \
@@ -69,7 +69,8 @@ $(BUILD)/user_density.o:          $(BUILD)/constants.o
 $(BUILD)/functions.o:             $(BUILD)/parameters.o $(BUILD)/user_density.o
 $(BUILD)/tdep_search.o:           $(BUILD)/datatype.o
 $(BUILD)/mie_routines.o:          $(BUILD)/datatype.o
-$(BUILD)/radiation_calculation.o: $(BUILD)/functions.o
+$(BUILD)/orbit_populations.o:     $(BUILD)/functions.o
+$(BUILD)/radiation_calculation.o: $(BUILD)/orbit_populations.o
 $(BUILD)/volume_splitting.o:      $(BUILD)/radiation_calculation.o
 $(BUILD)/fits_io.o:               $(BUILD)/datatype.o
 $(BUILD)/output_routines.o:       $(BUILD)/functions.o $(BUILD)/fits_io.o

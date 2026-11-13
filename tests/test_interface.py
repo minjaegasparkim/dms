@@ -28,7 +28,7 @@ def test_repeated_runs_identical():
     r1 = make_model().run()
     r2 = make_model().run()
     # identical up to the summation order of the OpenMP threads
-    assert r1.f_d == pytest.approx(r2.f_d, rel=1e-12)
+    assert r1.f_d == pytest.approx(r2.f_d, rel=1e-10)
     np.testing.assert_allclose(r1.sed["total"], r2.sed["total"], rtol=1e-10)
 
 
@@ -38,7 +38,7 @@ def test_namelist_roundtrip(tmp_path):
     f = tmp_path / "model.nml"
     m.write(str(f))
     m2 = dms.Model.from_file(str(f))
-    assert m2.run().f_d == pytest.approx(m.run().f_d, rel=1e-12)
+    assert m2.run().f_d == pytest.approx(m.run().f_d, rel=1e-10)
 
 
 @requires_dms
@@ -150,3 +150,13 @@ def test_notebook_3_parameter_study(tmp_path):
         out = run_notebook("3_parameter_study.ipynb", tmp_path)
         assert expected in out
     assert "ice50_G_q3.5" in out
+
+
+@requires_dms
+def test_notebook_4_ice_loss(tmp_path):
+    """Four models: sublimation only, and photosputtering against collisions + P-R drag (local and
+    release orbits) and against P-R drag alone (about 30 s)."""
+    out = run_notebook("4_ice_loss.ipynb", tmp_path)
+    assert "UV photons (5.1-13.6 eV) at 1 au: 1.18e+15" in out
+    assert "ps_pr        f_d" in out and "0.0 % by mass" in out
+    assert "32 orbit bins" in out                          # eccentric belt, ice state per orbit

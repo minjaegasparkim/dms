@@ -28,6 +28,7 @@ module radiation_calculation
   use constants
   use parameters
   use functions
+  use orbit_populations
 
   implicit none
 
@@ -47,34 +48,21 @@ contains
     real(r2), dimension(:,:), intent(inout)  :: ph_pol    ! scattered / polarised flux (weighted)
 
     real(r2) :: X, Y, Zd, rho, r, m, inv_r2, theta, t, f, rxy2, c2, s2, w
-    integer  :: id, ia, ig, ic, is, ib
+    integer  :: id, ia, ig, ic, is, ib, ip, np, kx, ob, src
     real(r2), dimension(n_wavelength_obs) :: pol, dsca
+    real(r2), dimension(max_belts + 1) :: rho_p
+    integer,  dimension(max_belts + 1) :: kx_p, ob_p
 
     call detector_to_disk(xd, yd, z, X, Y, Zd)
-    rho = density_disk(X, Y, Zd)
-    if (rho <= 0.0_r2) return
-
     r  = sqrt(xd*xd + yd*yd + z*z)
-    m  = rho * dV
     id = dist_index(r)
+    ! populations at this point: one (the distance entry) without orbit bins; with orbit bins
+    ! (eccentric belts, photosputtering on release orbits) one per belt (orbit_populations.f90)
+    call point_populations(X, Y, Zd, id, np, rho_p, kx_p, ob_p)
+    if (np == 0) return
+    if (np == 1 .and. rho_p(1) <= 0.0_r2) return
 
-    ! m is the mass before sublimation / blow-out; the surviving dust mass is m * mfrac_dist(id).
-    ! hist keeps m (the kernels j_reem, sig_dist, fl_dist, npm are per kg of initial mass).
-    mass_acc = mass_acc + m * mfrac_dist(id)
-    sig_acc  = sig_acc + m * sig_dist(id)
-    hist(id) = hist(id) + m * wsym
-    fd_acc   = fd_acc + wsym * m * fl_dist(id) / (4.0_r2 * pi * r * r)
-
-    !-------------------------------------------------------------------------------------------
-    ! thermal re-emission
-    !-------------------------------------------------------------------------------------------
-    if (do_reem) reem(:) = reem(:) + m * j_reem(:, id)
-
-    !-------------------------------------------------------------------------------------------
-    ! scattering and polarisation
-    !-------------------------------------------------------------------------------------------
     if (do_sca) then
-
       theta = acos(max(-1.0_r2, min(1.0_r2, z / r))) / deg2rad
       t     = theta / d_angle
       ia    = int(t) + 1
@@ -83,18 +71,43 @@ contains
         ia = n_angle2 - 1
         f  = 1.0_r2
       end if
+      pol(:)  = 0.0_r2
+      dsca(:) = 0.0_r2
+    end if
+
+    do ip = 1, np
+    rho = rho_p(ip)
+    if (rho <= 0.0_r2) cycle
+    kx = kx_p(ip)
+    ob = ob_p(ip)
+    m  = rho * dV
+
+    ! m is the mass before sublimation / blow-out; the surviving dust mass is m * mfrac_dist(id).
+    ! hist keeps m (the kernels j_reem, sig_dist, fl_dist, npm are per kg of initial mass).
+    mass_acc = mass_acc + m * mfrac_dist(kx)
+    sig_acc  = sig_acc + m * sig_dist(kx)
+    hist(kx) = hist(kx) + m * wsym
+    fd_acc   = fd_acc + wsym * m * fl_dist(kx) / (4.0_r2 * pi * r * r)
+
+    !-------------------------------------------------------------------------------------------
+    ! thermal re-emission
+    !-------------------------------------------------------------------------------------------
+    if (do_reem) reem(:) = reem(:) + m * j_reem(:, kx)
+
+    !-------------------------------------------------------------------------------------------
+    ! scattering and polarisation
+    !-------------------------------------------------------------------------------------------
+    if (do_sca) then
 
       inv_r2 = m / (r * r)
 
       if (uniform_population) then
 
-        dsca(:) = inv_r2 * ((1.0_r2 - f) * Ksca_sum(:, ia) + f * Ksca_sum(:, ia+1))
-        pol(:)  = inv_r2 * ((1.0_r2 - f) * Kpol_sum(:, ia) + f * Kpol_sum(:, ia+1))
+        dsca(:) = dsca(:) + inv_r2 * ((1.0_r2 - f) * Ksca_sum(:, ia) + f * Ksca_sum(:, ia+1))
+        pol(:)  = pol(:)  + inv_r2 * ((1.0_r2 - f) * Kpol_sum(:, ia) + f * Kpol_sum(:, ia+1))
 
-      else
+      else if (ob == 0) then
 
-        pol(:)  = 0.0_r2
-        dsca(:) = 0.0_r2
         do ic = 1, n_grain_components
           do ig = 1, n_grain_radius
             w = npm(ig, ic, id)
@@ -106,7 +119,33 @@ contains
           end do
         end do
 
+      else
+
+        ! orbit bin: every initial grain ends as its final component at this distance
+        do src = 1, n_grain_components
+          do ig = 1, n_grain_radius
+            w = npm_init(ig, src)
+            if (w <= 0.0_r2) cycle
+            if (ps_lost_ob(ig, src, ob)) then
+              ic = dest_lost(ig, src, id)
+            else
+              ic = dest_keep(ig, src, id)
+            end if
+            if (ic <= 0) cycle
+            is = sp_dist(ig, ic, id)
+            w  = w * inv_r2
+            dsca(:) = dsca(:) + w * ((1.0_r2 - f) * KS11(:, ia, ig, is) + f * KS11(:, ia+1, ig, is))
+            pol(:) = pol(:) + w * ((1.0_r2 - f) * KS12(:, ia, ig, is) + f * KS12(:, ia+1, ig, is))
+          end do
+        end do
+
       end if
+
+    end if
+
+    end do                ! populations
+
+    if (do_sca) then
 
       sca(:) = sca(:) + dsca(:)
 

@@ -56,6 +56,7 @@ writes an input file for the command-line program.
 | `res.tau_profile` | vertical optical depth: `r_au`, `mean`, `pericentre`, `apocentre` |
 | `res.temperature` | `r_au`, `T[n_dist, n_component, n_size]` |
 | `res.species` | one entry per optical species: `component` (1-based), `T` [K] (−1 without temperature dependence), `is_data` (False for sets interpolated with `tdep_mode = 'linear'`), `file` |
+| `res.photosputtering` | `None` without photosputtering; otherwise `r_ice_loss` [n_size, n_comp]: largest distance [au] at which the grains of that size lose their ice (0: nowhere; the outer edge of the model: everywhere; −1: component without photosputtering), and `photons_1au` [photons cm⁻² s⁻¹]: UV photon flux in `ps_band` at 1 au; with orbit bins (eccentric belts, `ps_orbit = 'release'`) also `a_ice_loss` [n_size, n_comp]: largest semi-major axis [au] of the eccentric-belt orbits on which the grains lose their ice (`r_ice_loss` then applies to circular belts), and `orbit_bins` |
 | `res.grains` | `a`, `edges`, `number[n_size, n_component]`, `beta` |
 | `res.blowout_beta` | (smallest, largest) blow-out threshold β_crit used; (0, 0) if blow-out is off |
 | `res.luminosity_lsun`, `res.pixel_arcsec`, `res.pixel_au` | |

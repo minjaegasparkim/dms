@@ -75,6 +75,14 @@ subroutine read_input_file(fname)
   logical,  dimension(mc) :: tdep
   character(len=32) :: tdep_mode
   real(r2) :: tdep_dt
+  logical  :: photosputtering
+  real(r2), dimension(mc) :: ps_yield, ps_ice_fraction
+  integer,  dimension(mc) :: ps_residue
+  character(len=32)  :: ps_time, ps_absorption, ps_orbit
+  integer  :: ps_orbit_bins
+  character(len=512) :: ps_uv_file
+  real(r2) :: ps_tau, ps_age, ps_isrf
+  real(r2), dimension(2) :: ps_band
   ! &scattering
   integer  :: n_angles
   character(len=32) :: phase_function
@@ -95,7 +103,8 @@ subroutine read_input_file(fname)
                   emt_output, tdep, tdep_mode, tdep_dt, tdep_component, tdep_temperatures, tdep_files, &
                   sublimation, t_sublimation, &
                   sublimation_residue, blowout, blowout_beta, blowout_release, grain_shape, dhs_fmax, dhs_nf, &
-                  dhs_xmax
+                  dhs_xmax, photosputtering, ps_yield, ps_ice_fraction, ps_residue, ps_time, ps_tau, &
+                  ps_age, ps_absorption, ps_band, ps_isrf, ps_uv_file, ps_orbit, ps_orbit_bins
   namelist /scattering/ n_angles, phase_function, g1, g2, w, p_max
 
   integer :: u, ios, k, nw, nf
@@ -147,6 +156,10 @@ subroutine read_input_file(fname)
   blowout_beta = -1.0_r2;  blowout_release = 'circular'
   grain_shape = merge('dhs   ', 'sphere', switch_grain_shape == 1);  dhs_fmax = pm_dhs_fmax;  dhs_nf = pm_dhs_nf
   dhs_xmax = pm_dhs_xmax
+  photosputtering = .false.;  ps_yield = 0.0_r2;  ps_ice_fraction = 1.0_r2;  ps_residue = 0
+  ps_time = "shortest";  ps_tau = 0.0_r2;  ps_age = 0.0_r2;  ps_absorption = "grain"
+  ps_band = [0.0912_r2, 0.2431_r2];  ps_isrf = 0.0_r2;  ps_uv_file = "";  ps_orbit = "local"
+  ps_orbit_bins = 32
 
   n_angles = n_angle2;  phase_function = "mie";  g1 = 0.0_r2;  g2 = 0.0_r2;  w = 1.0_r2;  p_max = 0.0_r2
 
@@ -399,6 +412,75 @@ subroutine read_input_file(fname)
   if (switch_sublimation == 0) then
     T_subl = -1.0_r2;  subl_to_comp = 0
   end if
+
+  ! photosputtering (dms 2.2)
+  switch_photosputtering = merge(1, 0, photosputtering)
+  allocate(ps_Y(n_components), ps_fice(n_components), ps_to_comp(n_components))
+  ps_Y(:) = ps_yield(1:n_components);  ps_fice(:) = ps_ice_fraction(1:n_components)
+  ps_to_comp(:) = ps_residue(1:n_components)
+  if (switch_photosputtering == 0) then
+    ps_Y = 0.0_r2;  ps_to_comp = 0
+  else
+    if (any(ps_Y < 0.0_r2)) then
+      call dms_fail("&dust ps_yield must not be negative");  return
+    end if
+    if (all(ps_Y <= 0.0_r2)) then
+      call dms_fail("&dust photosputtering = .true. needs ps_yield > 0 for at least one component");  return
+    end if
+    do k = 1, n_components
+      if (ps_Y(k) <= 0.0_r2) cycle
+      if (ps_fice(k) <= 0.0_r2 .or. ps_fice(k) > 1.0_r2) then
+        call dms_fail("&dust ps_ice_fraction must be in ]0, 1]");  return
+      end if
+      if (ps_to_comp(k) < 0 .or. ps_to_comp(k) > n_components .or. ps_to_comp(k) == k) then
+        call dms_fail("&dust ps_residue of component "//integer_to_string(k)// &
+                      " must be 0 (vanishes) or another component");  return
+      end if
+      if (ps_to_comp(k) > 0) then
+        if (ps_Y(ps_to_comp(k)) > 0.0_r2) then
+          call dms_fail("&dust ps_residue of component "//integer_to_string(k)// &
+                        " must be a component without photosputtering (ps_yield = 0)");  return
+        end if
+      end if
+    end do
+    select case (lower(ps_time))
+    case ("collision", "collisions");  switch_ps_time = 1
+    case ("pr", "p-r", "poynting-robertson");  switch_ps_time = 2
+    case ("age");  switch_ps_time = 3
+    case ("shortest");  switch_ps_time = 4
+    case default
+      call dms_fail("&dust ps_time must be 'collision', 'pr', 'age' or 'shortest'");  return
+    end select
+    if (switch_ps_time == 1 .and. ps_tau <= 0.0_r2) then
+      call dms_fail("&dust ps_time = 'collision' needs the vertical optical depth ps_tau > 0");  return
+    end if
+    if (switch_ps_time == 3 .and. ps_age <= 0.0_r2) then
+      call dms_fail("&dust ps_time = 'age' needs ps_age > 0 [yr]");  return
+    end if
+    if (ps_tau < 0.0_r2 .or. ps_age < 0.0_r2 .or. ps_isrf < 0.0_r2) then
+      call dms_fail("&dust ps_tau, ps_age and ps_isrf must not be negative");  return
+    end if
+    select case (lower(ps_absorption))
+    case ("grain");  switch_ps_absorption = 1
+    case ("unity", "one", "1");  switch_ps_absorption = 2
+    case default
+      call dms_fail("&dust ps_absorption must be 'grain' or 'unity'");  return
+    end select
+    select case (lower(ps_orbit))
+    case ("local");  switch_ps_orbit = 1
+    case ("release");  switch_ps_orbit = 2
+    case default
+      call dms_fail("&dust ps_orbit must be 'local' or 'release'");  return
+    end select
+    if (ps_orbit_bins < 1) then
+      call dms_fail("&dust ps_orbit_bins must be at least 1");  return
+    end if
+    if (ps_band(1) <= 0.0_r2 .or. ps_band(2) <= ps_band(1)) then
+      call dms_fail("&dust ps_band must be two wavelengths [micron] with 0 < ps_band(1) < ps_band(2)");  return
+    end if
+  end if
+  ps_tau_v = ps_tau;  ps_age_yr = ps_age;  ps_isrf_flux = ps_isrf * 1.0e4_r2      ! cm^-2 -> m^-2
+  ps_lam1 = ps_band(1);  ps_lam2 = ps_band(2);  ps_uv_name = ps_uv_file;  ps_nbins = ps_orbit_bins
   switch_blowout = merge(1, 0, blowout)
   select case (lower(blowout_release))
   case ("circular");                switch_blowout_release = 1

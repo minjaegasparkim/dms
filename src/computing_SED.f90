@@ -41,7 +41,7 @@ subroutine computing_SED
   if (verbose) print *, " "
 
   allocate(reem(n_wavelength_obs), sca(n_wavelength_obs), qq(n_wavelength_obs), uu(n_wavelength_obs))
-  allocate(hist_tot(n_dist), redges(0:n_r))
+  allocate(hist_tot(n_dist + n_ocell), redges(0:n_r))
   reem = 0.0_r2; sca = 0.0_r2; qq = 0.0_r2; uu = 0.0_r2
   hist_tot = 0.0_r2; macc = 0.0_r2; sacc = 0.0_r2; fd_tot = 0.0_r2
   allocate(ph_sca(n_wavelength_obs, n_phase_bins), ph_pol(n_wavelength_obs, n_phase_bins))
@@ -103,7 +103,7 @@ subroutine computing_SED
   if (verbose) print *, "    ", n_r * n_b * n_p, " volume elements, time: ", &
            real_to_string(real(t1 - t0, kind=r2) / real(rate, kind=r2)), " s"
 
-  allocate(mass_hist(n_dist))
+  allocate(mass_hist(n_dist + n_ocell))
   mass_hist  = hist_tot
   mass_model = sum(mass_hist * mfrac_dist)
   if (.not. (mass_model > 0.0_r2)) then

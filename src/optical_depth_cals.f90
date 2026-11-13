@@ -21,11 +21,12 @@ subroutine optical_depth_cals
   use constants
   use parameters
   use functions
+  use orbit_populations
 
   implicit none
 
   integer, parameter :: n_w = 400, n_z = 200
-  integer  :: n_psi, iw, ipsi, iz, id, ic, ig, u, i_peri, i_apo, k
+  integer  :: n_psi, iw, ipsi, iz, id, ic, ig, u, i_peri, i_apo, k, ob, kx
   real(r2) :: varpi, psi, zmax, dz, Zd, X, Y, r, tau, area, dpsi
   real(r2), allocatable, dimension(:)   :: w_grid, tau_mean_az, tau_peri, tau_apo
   real(r2), allocatable, dimension(:,:) :: tau_map
@@ -48,9 +49,24 @@ subroutine optical_depth_cals
   allocate(number_total(n_grain_radius, n_grain_components))
   do ic = 1, n_grain_components
     do ig = 1, n_grain_radius
-      number_total(ig, ic) = factor_scaling_mass * sum(mass_hist(:) * npm(ig, ic, :))
+      number_total(ig, ic) = factor_scaling_mass * sum(mass_hist(1:n_dist) * npm(ig, ic, :))
     end do
   end do
+  ! orbit cells (eccentric belts with photosputtering on release orbits)
+  if (orbit_mode) then
+    do ob = 1, n_obins
+      do id = ob_idlo(ob), ob_idhi(ob)
+        kx = cell_index(ob, id)
+        if (mass_hist(kx) <= 0.0_r2) cycle
+        do ic = 1, n_grain_components
+          do ig = 1, n_grain_radius
+            number_total(ig, ic) = number_total(ig, ic) + &
+                                   factor_scaling_mass * mass_hist(kx) * cell_number(ig, ic, kx, id, ob)
+          end do
+        end do
+      end do
+    end do
+  end if
 
   !------------------------------------------------------------------------------------------------
   ! vertical optical depth
@@ -77,7 +93,7 @@ subroutine optical_depth_cals
         Zd = -zmax + (real(iz, kind=r2) - 0.5_r2) * dz
         r  = sqrt(varpi * varpi + Zd * Zd)
         id = dist_index(r)
-        tau = tau + density_disk(X, Y, Zd) * sig_dist(id) * dz
+        tau = tau + rho_sigma(X, Y, Zd, id) * dz
       end do
       tau_map(iw, ipsi) = tau * factor_scaling_mass
     end do
@@ -96,7 +112,7 @@ subroutine optical_depth_cals
       varpi = r_in_eff * (r_max_3d / r_in_eff)**((real(iz, kind=r2) - 0.5_r2) / 2000.0_r2)
       dz    = varpi * log(r_max_3d / r_in_eff) / 2000.0_r2
       X = varpi * sin(psi);  Y = varpi * cos(psi)
-      tau = tau + density_disk(X, Y, 0.0_r2) * sig_dist(dist_index(varpi)) * dz
+      tau = tau + rho_sigma(X, Y, 0.0_r2, dist_index(varpi)) * dz
     end do
     tau_radial_max = max(tau_radial_max, tau * factor_scaling_mass)
   end do

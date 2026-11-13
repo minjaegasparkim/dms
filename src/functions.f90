@@ -156,9 +156,24 @@ contains
     real(r2), intent(in) :: X, Y, Zd                         ! disk-frame coordinates [m]
     integer,  intent(in) :: k
     real(r2)             :: rho
-    real(r2)             :: r, varpi, s, cosf, a, h
+    real(r2)             :: a
+
+    call belt_point(X, Y, Zd, k, rho, a)
+
+  end function density_belt
+
+
+  ! density of belt k (without normalisation) and semi-major axis a [m] of the belt orbit through
+  ! the point (a = 0 where the belt has no dust)
+  pure subroutine belt_point(X, Y, Zd, k, rho, a)
+
+    real(r2), intent(in)  :: X, Y, Zd                        ! disk-frame coordinates [m]
+    integer,  intent(in)  :: k
+    real(r2), intent(out) :: rho, a
+    real(r2)              :: r, varpi, s, cosf, h
 
     rho   = 0.0_r2
+    a     = 0.0_r2
     varpi = sqrt(X*X + Y*Y)
     r     = sqrt(varpi*varpi + Zd*Zd)
     if (r <= 0.0_r2) return
@@ -185,7 +200,10 @@ contains
       a = s
     end if
 
-    if (a < belt_Rmin(k) .or. a > belt_Rmax(k)) return
+    if (a < belt_Rmin(k) .or. a > belt_Rmax(k)) then
+      a = 0.0_r2
+      return
+    end if
 
     if (belt_law(k) == 5) then
       rho = user_density_fn(a, X, Y, Zd, k, user_par)
@@ -199,7 +217,7 @@ contains
       rho = rho * exp(-0.5_r2 * (Zd / h)**2)
     end if
 
-  end function density_belt
+  end subroutine belt_point
 
 
   pure function density_disk(X, Y, Zd) result(rho)

@@ -1,0 +1,153 @@
+// DMS 2.2: the steps of a run and the source files of each step.
+// Render: dot -Tsvg code_map.dot -o code_map.svg ; dot -Tpdf code_map.dot -o code_map.pdf
+digraph dms {
+  graph [rankdir=TB, fontname="Helvetica", fontsize=11, nodesep=0.35, ranksep=0.42, newrank=true,
+         bgcolor="white", pad=0.3, label=<<B>DMS 2.2: steps of a run and their source files</B>   (src/dms_driver.f90 calls the steps in this order; after every step the error flag dms_ierr is checked)>,
+         labelloc=t, labeljust=l];
+  node  [shape=plain, fontname="Helvetica", fontsize=10];
+  edge  [color="#555555", arrowsize=0.7, fontname="Helvetica", fontsize=9];
+
+  // ---------------------------------------------------------------- entry points
+  subgraph cluster_entry {
+    label=<<B>Entry points</B>>; style="rounded,filled"; fillcolor="#f4f4f4"; color="#bbbbbb";
+    cli [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#ffffff" COLOR="#888888">
+      <TR><TD ALIGN="LEFT"><B>Command line</B>: bin/dms model.nml</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/dms.f90</FONT>  program dms</TD></TR></TABLE>>];
+    py [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#ffffff" COLOR="#888888">
+      <TR><TD ALIGN="LEFT"><B>Python</B>: dms.Model(...).run()</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/model.py</FONT>  Model, Result</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/namelist.py</FONT>  writes the input file</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms_api.f90</FONT>  run_model, reset_model, get_* (f2py)</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/dms_reset.f90</FONT>  frees all arrays between runs</TD></TR></TABLE>>];
+    batch [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#ffffff" COLOR="#888888">
+      <TR><TD ALIGN="LEFT"><B>Many models</B>: python -m dms.batch run queue runs -j 8</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/batch.py</FONT>  queue, workers, optics cache</TD></TR></TABLE>>];
+  }
+
+  // ---------------------------------------------------------------- the steps
+  node [shape=plain];
+  s0 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>0  Input</B>: read the namelist or ask the questions; defaults, units, checks</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/read_input_file.f90</FONT>  read_input_file (&amp;run &amp;star &amp;disk &amp;image &amp;wavelengths &amp;dust &amp;scattering)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/input_questions.f90</FONT>  input_questions (interactive)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/input_setup.f90</FONT>  set_defaults, finalize_input</TD></TR></TABLE>>];
+  s1 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>1  Effective-medium mixture</B> (optional, dust_mixing = .true.)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/dust_mixing.f90</FONT>  Maxwell Garnett, Bruggeman, Lichtenecker, Looyenga; writes an optical-data file</TD></TR></TABLE>>];
+  s2 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>2  Grids and star</B>: grain sizes, scattering angles, stellar intensity</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/pre_cals.f90</FONT>  pre_cals (size bins, size-distribution file, disk geometry)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/scattering_angles_cals.f90</FONT>  angle grid</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/reading_spectrum.f90</FONT>  black body, spectrum file, model grid (read_stellar_grid)</TD></TR></TABLE>>];
+  s3 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>3  Optical data</B>: n, k of every component; temperature-dependent sets (tdep)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/reading_temperature_dependent_data.f90</FONT>  union wavelength grid ("ri grid"), species, add_set, sort_sets</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/tdep_search.f90</FONT> + <FONT FACE="Courier" COLOR="#1f4e9c">src/dir_listing.c</FONT>  files &lt;base&gt;_&lt;T&gt;K (opendir/readdir)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#7a4a00">data/optical_constants/</FONT>  optical-data files</TD></TR></TABLE>>];
+  s4 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>4  Mie / DHS on the ri grid</B>: Qabs, Qsca, Qpr of every size and species (OpenMP)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/mie_cals.f90</FONT>  mie_cals, load_optics_cache / save_optics_cache, dhs_xmax</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#7a4a00">cache/*.miex</FONT>  optics cache (load_optics, save_optics)</TD></TR></TABLE>>];
+  s5 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>5  Optics at the observing wavelengths</B>: Q, scattering matrix S11, S12 (Mie, DHS or HG)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/Qabs_Qsca_S11_S12_cals.f90</FONT>  dhs_observing, forward_bins, phase_function_energy_conservation</TD></TR></TABLE>>];
+  s6 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>6  Temperatures</B> T(r, a, component) from the energy balance, on the distance grid</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/temperature_distribution_cals.f90</FONT>  nearest_species (T-dependent sets)</TD></TR></TABLE>>];
+  s7 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#fff3e6" COLOR="#c98a3c">
+    <TR><TD ALIGN="LEFT"><B>7  Grain populations</B> at every distance (number per kg of dust)</TD></TR>
+    <TR><TD ALIGN="LEFT">radiation pressure beta → photosputtering (2.2) → sublimation → blow-out</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/particle_abundances.f90</FONT>  particle_abundances, photosputtering, ice_lost, blowout_radius,</TD></TR>
+    <TR><TD ALIGN="LEFT">    blowout_thresholds; eccentric belts: setup_orbit_bins, build_orbit_cells, final_component</TD></TR></TABLE>>];
+  s8 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>8  Belt normalisation</B>: mass fraction of every belt</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/belt_normalisation.f90</FONT></TD></TR></TABLE>>];
+  s9a [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>9a  Images</B> (mode = 'image' or 'both')</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/max_temp_diff_cals.f90</FONT>  temperature step in a sub-volume (information)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/computing_images.f90</FONT>  N x N x N volume elements, maps of tau and mass</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/volume_splitting.f90</FONT>  adaptive sub-sampling (SubVol)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/radiation_calculation.f90</FONT>  radiation_point: emission, scattering, Q, U</TD></TR></TABLE>>];
+  s9b [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>9b  SED</B> (mode = 'sed')</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/computing_SED.f90</FONT>  quadrature in r, latitude, azimuth</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/radiation_calculation.f90</FONT>  radiation_point (same physics)</TD></TR></TABLE>>];
+  s10 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>10  Observation products</B> (images): PSF, coronagraph mask, Q_phi, U_phi, degree of polarisation</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/observation_products.f90</FONT></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/obs_tools.f90</FONT>  azimuthal_stokes, pol_degree, gauss_convolve</TD></TR></TABLE>>];
+  s11 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>11  Optical depth and dust proxies</B>: f_d, tau_mean, tau_peak, radial tau, profiles</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/optical_depth_cals.f90</FONT></TD></TR></TABLE>>];
+  s12 [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eef3fb" COLOR="#5b7fbf">
+    <TR><TD ALIGN="LEFT"><B>12  Summary and output files</B></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/summary.f90</FONT>  screen and summary.&lt;name&gt;.txt</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/output_routines.f90</FONT>  write_image, write_sed, write_phase, write_cubes, write_profiles</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/fits_io.f90</FONT>  FITS writer (no library)</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#7a4a00">results/</FONT>  SED, images, temperatures, grain sizes, optical depth, phase function</TD></TR></TABLE>>];
+
+  // ---------------------------------------------------------------- shared modules
+  subgraph cluster_mie {
+    label=<<B>Mie library</B> (steps 4 and 5)>; style="rounded,filled"; fillcolor="#f7f7ee"; color="#bbbb99";
+    mie [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3">
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/mie_routines.f90</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT">miex (aa2, shexqnn2; Wolf &amp; Voshchinnikov 2004)</TD></TR>
+      <TR><TD ALIGN="LEFT">mie_amplitudes, coated_ab (coated spheres)</TD></TR>
+      <TR><TD ALIGN="LEFT">DHS: dhs_points, dhs_efficiencies, dhs_large_x</TD></TR></TABLE>>];
+  }
+  subgraph cluster_shared {
+    label=<<B>Used by all steps</B>>; style="rounded,filled"; fillcolor="#f7f7ee"; color="#bbbb99";
+    shared [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3">
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/datatype.f90</FONT>  kinds (r2 = double)</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/constants.f90</FONT>  physical constants</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/parameters.f90</FONT>  all switches, grids and arrays of a run;</TD></TR>
+      <TR><TD ALIGN="LEFT">    default folders data/optical_constants/, cache/, results/</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/functions.f90</FONT>  frames, density laws, Planck, stellar_radiance,</TD></TR>
+      <TR><TD ALIGN="LEFT">    HG phase function, interpolation, read_table, dms_fail;</TD></TR>
+      <TR><TD ALIGN="LEFT">    density_belt, belt_point (density and semi-major axis)</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/user_density.f90</FONT>  user-defined density (edit, recompile)</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">src/orbit_populations.f90</FONT>  populations of a point: orbit bins of eccentric</TD></TR>
+      <TR><TD ALIGN="LEFT">    belts (point_populations, orbit_bin, cell_index, rho_sigma); steps 8, 9, 11</TD></TR></TABLE>>];
+  }
+
+  // ---------------------------------------------------------------- Python after the run
+  subgraph cluster_after {
+    label=<<B>After the run</B>>; style="rounded,filled"; fillcolor="#f4f4f4"; color="#bbbbbb";
+    res [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#ffffff" COLOR="#888888">
+      <TR><TD ALIGN="LEFT"><B>Python Result</B> (from memory, through the get_* routines)</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/model.py</FONT>  res.sed, res.images, res.temperature, res.grains,</TD></TR>
+      <TR><TD ALIGN="LEFT">    res.photosputtering, res.species, res.tau_profile, ...</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/plot.py</FONT>  quick-look plots</TD></TR></TABLE>>];
+    files [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#ffffff" COLOR="#888888">
+      <TR><TD ALIGN="LEFT"><B>Output files</B></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/io.py</FONT>  reads the FITS and ASCII files</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">tools/quicklook.py</FONT>  plots of a results folder</TD></TR></TABLE>>];
+  }
+
+  // ---------------------------------------------------------------- helpers outside a run
+  subgraph cluster_helpers {
+    label=<<B>Before a run (optional helpers)</B>>; style="rounded,filled"; fillcolor="#f4f4f4"; color="#bbbbbb";
+    helpers [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#ffffff" COLOR="#888888">
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/emc.py</FONT>  composite grains with emc (Ossenkopf 1991), writes optical data</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/stellar.py</FONT>  model-atmosphere grids (spectrum = 'grid')</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">python/dms/model.py</FONT>  tdep_files: list temperature-dependent sets</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">tools/check_setup.py</FONT>  compilers, libraries, build</TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT FACE="Courier" COLOR="#1f4e9c">tools/plot_optical_constants.py</FONT>  n, k of data files</TD></TR></TABLE>>];
+  }
+
+  // ---------------------------------------------------------------- edges
+  cli -> s0; py -> s0 [label=" temporary .nml"]; batch -> cli [label=" bin/dms", style=dashed]; batch -> py [label=" or Python", style=dashed];
+  s0 -> s1 [label=" dms_run"]; s1 -> s2; s2 -> s3; s3 -> s4; s4 -> s5; s5 -> s6; s6 -> s7; s7 -> s8;
+  s8 -> s9a [label=" image / both"]; s8 -> s9b [label=" sed"];
+  s9a -> s10; s10 -> s11; s9b -> s11; s11 -> s12;
+  s12 -> res [label=" Python"]; s12 -> files [label=" write_files"];
+  helpers -> s3 [style=dashed, label=" optical data, stellar grids"];
+  mie -> s4 [style=dotted, arrowhead=none]; mie -> s5 [style=dotted, arrowhead=none];
+
+  { rank=same; cli; py; batch; }
+  { rank=same; s9a; s9b; }
+  { rank=same; res; files; }
+  { rank=same; s3; helpers; }
+  { rank=same; s5; mie; }
+  { rank=same; s8; shared; }
+}

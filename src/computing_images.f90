@@ -58,7 +58,7 @@ subroutine computing_images
 
   allocate(image_reem(n_wavelength_obs, N, N), image_sca(n_wavelength_obs, N, N), &
            image_Q(n_wavelength_obs, N, N),    image_U(n_wavelength_obs, N, N))
-  allocate(total_mass(N, N), sig_map(N, N), hist_tot(n_dist))
+  allocate(total_mass(N, N), sig_map(N, N), hist_tot(n_dist + n_ocell))
   image_reem = 0.0_r2; image_sca = 0.0_r2; image_Q = 0.0_r2; image_U = 0.0_r2
   total_mass = 0.0_r2; sig_map = 0.0_r2;   hist_tot = 0.0_r2
   fd_tot = 0.0_r2
@@ -182,7 +182,7 @@ subroutine computing_images
   ! normalisation to the dust mass
   !------------------------------------------------------------------------------------------------
 
-  allocate(mass_hist(n_dist))
+  allocate(mass_hist(n_dist + n_ocell))
   mass_hist  = hist_tot
   mass_model = sum(mass_hist * mfrac_dist)
   if (.not. (mass_model > 0.0_r2)) then

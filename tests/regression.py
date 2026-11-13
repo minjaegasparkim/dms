@@ -21,7 +21,7 @@ import numpy as np  # noqa: E402
 REFERENCE = os.path.join(HERE, "reference", "examples.json")
 
 EXAMPLE_NAMES = ["debris_ring", "two_belts", "eccentric_ring", "clump_user_density",
-                 "polarisation_hg", "edge_on_disk", "sublimation_ice"]
+                 "polarisation_hg", "edge_on_disk", "sublimation_ice", "photosputtering_ice"]
 
 # images that are compared (summed over the image), if present
 IMAGES = ["reem", "sca", "qphi", "uphi", "pol", "total"]

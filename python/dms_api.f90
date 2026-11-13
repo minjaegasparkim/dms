@@ -258,6 +258,45 @@ subroutine get_grains(ngr, ncomp, a, edges, number, beta)
 end subroutine get_grains
 
 
+subroutine get_photosputtering(ngr, ncomp, rloss, aloss, photons, nbins)
+
+  ! rloss(ig, ic): largest distance [au] at which grains lose their ice by photosputtering (0: nowhere,
+  ! -1: component without photosputtering or photosputtering off); with orbit bins (eccentric belts,
+  ! ps_orbit = 'release') rloss applies to the circular belts and aloss(ig, ic) is the largest
+  ! semi-major axis [au] of the eccentric-belt orbits on which they lose it (-1 without orbit bins);
+  ! photons: band photon flux at 1 au [photons/cm^2/s]; nbins: number of orbit bins (dms 2.2)
+
+  use parameters
+  use constants
+
+  implicit none
+
+  integer, intent(in)                              :: ngr, ncomp
+  real(kind=8), dimension(ngr, ncomp), intent(out) :: rloss, aloss
+  real(kind=8), intent(out)                        :: photons
+  integer, intent(out)                             :: nbins
+
+  rloss = -1.0d0;  aloss = -1.0d0;  photons = 0.0d0;  nbins = 0
+  if (switch_photosputtering == 1 .and. orbit_mode .and. allocated(ps_aloss)) then
+    where (ps_aloss > 0.0d0)
+      aloss = ps_aloss / au
+    elsewhere
+      aloss = ps_aloss
+    end where
+    nbins = n_obins
+  end if
+  if (switch_photosputtering == 1 .and. allocated(ps_rloss)) then
+    where (ps_rloss > 0.0d0)
+      rloss = ps_rloss / au
+    elsewhere
+      rloss = ps_rloss
+    end where
+    photons = ps_photons_1au * 1.0d-4
+  end if
+
+end subroutine get_photosputtering
+
+
 subroutine get_tau_profile(ntau, prof)
 
   ! prof(:, 1..4) = distance [au], azimuthal mean, towards pericentre, towards apocentre
