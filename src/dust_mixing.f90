@@ -32,7 +32,7 @@ subroutine dust_mixing
   implicit none
 
   real(r2), allocatable, dimension(:,:) :: tab_m, tab_i
-  integer     :: n_m, n_i, il, unit
+  integer     :: n_m, n_i, il, unit, ios
   real(r2)    :: lam, n_in, k_in, nmix, kmix, lam_lo, lam_hi
   complex(r2) :: e_m, e_in, e_av, beta, b, sq, e1, e2
 
@@ -58,7 +58,12 @@ subroutine dust_mixing
   if (verbose) print *, "   inclusion : ", trim(emt_inclusion_file), "  (", real_to_string(vol_frac*100.0_r2), " %)"
 
   open(newunit=unit, file=trim(ri_dir)//trim(emt_output_file), action="write", status="replace", &
-       form="formatted")
+       form="formatted", iostat=ios)
+  if (ios /= 0) then
+    call dms_fail("cannot write the EMT mixture "//trim(ri_dir)//trim(emt_output_file)// &
+                  " (does the folder exist?)")
+    return
+  end if
   write(unit, '(a)') "# EMT mixture written by DMS: wavelength [micron], n, k"
 
   do il = 1, n_m

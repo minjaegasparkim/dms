@@ -292,6 +292,10 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 
 ## Examples
 
+Chapter 16 of the manual ([docs/manual/dms_manual.pdf](docs/manual/dms_manual.pdf)) is a cookbook: one
+recipe per task, with the files, the run time, the input that matters, the result and a figure.
+All recipes run from the repository root, e.g. `python3 examples/recipes/eccentric_ring.py`.
+
 | file | what it shows |
 |---|---|
 | [examples/0_getting_started.ipynb](examples/0_getting_started.ipynb) | Example 0: check the installation, the first SED and image |
@@ -307,6 +311,7 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 | [examples/sublimation_ice.nml](examples/sublimation_ice.nml) | ice–silicate grains that lose their ice inside the sublimation radius |
 | [examples/photosputtering_ice.nml](examples/photosputtering_ice.nml) | the same with photosputtering (release orbits, collisions and P-R drag): the ice-loss radius of every grain size in the summary |
 | [examples/clump_user_density.nml](examples/clump_user_density.nml) | a user-defined density: a ring with a clump |
+| [examples/recipes/](examples/recipes/) | short scripts, one per task (ring from a file, eccentric ring, observed polarisation, own density law, hollow spheres, temperature-dependent forsterite, sublimation); each prints its numbers and writes a figure |
 
 ## Features
 

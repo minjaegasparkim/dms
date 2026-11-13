@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.2.1 (2026-11) – examples cookbook
+
+- **Manual: new chapter "Examples: a cookbook"** (Sect. 16). One recipe per task, each with the
+  files, the run time, what it shows, the input that matters, the result and a figure: a first
+  model in Python, a ring from an input file, an eccentric ring (pericentre and apocentre glow),
+  two belts with simulated observations, polarimetric imaging, an own density law, composite
+  grains (EMT), hollow spheres (DHS), temperature-dependent forsterite, sublimation, photosputtering,
+  a grid of models and fitting. The example sections that were spread over the Python and tools
+  chapters are now in this chapter; those chapters point to it.
+- **New `examples/recipes/`**: seven short scripts (`ring_from_file.py`, `eccentric_ring.py`,
+  `observed_polarisation.py`, `user_clump.py`, `hollow_spheres.py`, `forsterite_temperature.py`,
+  `sublimation.py`) that run in 5–35 s, print their main numbers and write the figures of the
+  cookbook (`docs/images/recipe_*.png`). Output folder: the current directory, or
+  `DMS_RECIPE_OUT`.
+- **Fix:** an `emt_output` path that cannot be written (e.g. a folder that does not exist) stopped
+  Python with a Fortran runtime error; it is now an ordinary DMS error.
+- Tests: `tests/test_recipes.py` runs the three fastest recipes.
+
 ## 2.2.0 (2026-11) – ice loss by photosputtering
 
 - **New `&dust photosputtering` (default off).** UV photons sputter water molecules off icy grains
