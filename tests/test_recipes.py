@@ -25,3 +25,9 @@ def run_recipe(name, tmp_path):
 def test_recipe_runs(name, figure, tmp_path):
     run_recipe(name, tmp_path)
     assert (tmp_path / figure).stat().st_size > 10000
+
+
+def test_every_recipe_has_a_notebook():
+    scripts = {f[:-3] for f in os.listdir(RECIPES) if f.endswith(".py") and not f.startswith("_")}
+    notebooks = {f[:-6] for f in os.listdir(RECIPES) if f.endswith(".ipynb")}
+    assert scripts == notebooks

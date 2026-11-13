@@ -16,7 +16,13 @@
   `DMS_RECIPE_OUT`.
 - **Fix:** an `emt_output` path that cannot be written (e.g. a folder that does not exist) stopped
   Python with a Fortran runtime error; it is now an ordinary DMS error.
-- Tests: `tests/test_recipes.py` runs the three fastest recipes.
+- Every recipe is also a notebook (`examples/recipes/*.ipynb`, executed, so the figures show on
+  GitHub); `tools/recipe_notebooks.py` makes them from the scripts.
+- README: a cookbook section with a table of all recipes (notebook, script, run time) and a
+  gallery; the images at the top now show scattered and polarised light of a ring and the
+  pericentre and apocentre glow of an eccentric ring.
+- Tests: `tests/test_recipes.py` runs the three fastest recipes and checks that every recipe
+  script has its notebook.
 
 ## 2.2.0 (2026-11) – ice loss by photosputtering
 

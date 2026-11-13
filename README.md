@@ -2,12 +2,13 @@
 
 <p align="center">
   <img src="docs/manual/cover/images/ring_sca.png" width="24%" alt="Scattered light of a narrow ring at 1.6 micron">
-  <img src="docs/manual/cover/images/two_belts.png" width="24%" alt="Two belts at 24, 70 and 870 micron">
-  <img src="docs/manual/cover/images/apo.png" width="24%" alt="Apocentre glow of an eccentric ring at 870 micron">
-  <img src="docs/manual/cover/images/clump.png" width="24%" alt="Ring with a clump at 870 micron">
+  <img src="docs/manual/cover/images/ring_qphi.png" width="24%" alt="Polarised light Q_phi of the same ring at 1.6 micron">
+  <img src="docs/manual/cover/images/peri.png" width="24%" alt="Pericentre glow of an eccentric ring at 24 micron">
+  <img src="docs/manual/cover/images/apo.png" width="24%" alt="Apocentre glow of the same ring at 870 micron">
 </p>
-<p align="center"><sub>Computed with DMS: a narrow ring in scattered light (1.6 µm), two belts at
-24/70/870 µm, apocentre glow of an eccentric ring (870 µm) and a ring with a clump (870 µm).</sub></p>
+<p align="center"><sub>Computed with DMS: a narrow ring (i = 76°) in scattered light and in polarised
+light Q_φ at 1.6 µm, and an eccentric ring (e = 0.3, 1.5″ beam) with pericentre glow at 24 µm and
+apocentre glow at 870 µm.</sub></p>
 
 DMS computes what an optically thin debris disk looks like: its spectral energy distribution
 (SED), thermal emission maps, scattered-light images and linear-polarisation images
@@ -22,6 +23,8 @@ the results come back as NumPy arrays.
 
 DMS was introduced in Kim et al. (2018, A&A 618, A38). A reference manual with the physics and a
 detailed user guide is in [docs/manual/dms_manual.pdf](docs/manual/dms_manual.pdf).
+To start from an example close to your problem, see the [cookbook](#cookbook-one-recipe-per-task):
+one notebook per task, readable on GitHub with its results.
 
 ## Prerequisites
 
@@ -86,7 +89,7 @@ Intel ifx: `make FC=ifx OMP=-qopenmp` (not tested). The code uses a few Fortran 
 
 The notebook runs the setup check with the Python of the notebook, imports DMS, computes the SED
 of a small ring (f_d = 8.1e-05) and its image at 70 µm, and lists what to do if a step fails. It
-takes less than a minute. Examples 1–3 are notebooks in the same folder; on GitHub they can be
+takes less than a minute. Examples 1–4 and the cookbook recipes are notebooks too; on GitHub they can be
 read with their results without running them.
 
 Without Jupyter, the command-line program can be tested with an input file:
@@ -276,6 +279,42 @@ follows the orbits of the belt instead of the distance from the star (below: sca
 
 <p align="center"><img src="docs/images/ice_loss_eccentric.png" width="80%" alt="Ratio of the scattered light at 3.1 and 2.0 micron of an eccentric belt with the ice decided locally and per orbit"></p>
 
+## Cookbook: one recipe per task
+
+Each recipe is a notebook (results visible on GitHub without running it) and the same code as a
+short script; Sect. 16 of the [manual](docs/manual/dms_manual.pdf) explains every one. Copy the
+recipe closest to your problem and change the star, the disk and the dust.
+
+| task | notebook | script | time |
+|---|---|---|---|
+| a first model in Python: SED and images | [1_first_model.ipynb](examples/1_first_model.ipynb) | | 10 s |
+| a ring from an input file: images and SED | [ring_from_file.ipynb](examples/recipes/ring_from_file.ipynb) | [.py](examples/recipes/ring_from_file.py) | 10 s |
+| an eccentric ring: pericentre and apocentre glow | [eccentric_ring.ipynb](examples/recipes/eccentric_ring.ipynb) | [.py](examples/recipes/eccentric_ring.py) | 5 s |
+| two belts, sublimation, PSF and coronagraph | [2_two_belts_observed.ipynb](examples/2_two_belts_observed.ipynb) | | 2 min |
+| polarimetric imaging with a PSF and a coronagraph | [observed_polarisation.ipynb](examples/recipes/observed_polarisation.ipynb) | [.py](examples/recipes/observed_polarisation.py) | 30 s |
+| your own density distribution | [user_clump.ipynb](examples/recipes/user_clump.ipynb) | [.py](examples/recipes/user_clump.py) | 5 s |
+| non-spherical grains: hollow spheres (DHS) | [hollow_spheres.ipynb](examples/recipes/hollow_spheres.ipynb) | [.py](examples/recipes/hollow_spheres.py) | 15 s |
+| temperature-dependent optical constants | [forsterite_temperature.ipynb](examples/recipes/forsterite_temperature.ipynb) | [.py](examples/recipes/forsterite_temperature.py) | 35 s |
+| sublimation of ice | [sublimation.ipynb](examples/recipes/sublimation.ipynb) | [.py](examples/recipes/sublimation.py) | 15 s |
+| ice loss by photosputtering; eccentric belts | [4_ice_loss.ipynb](examples/4_ice_loss.ipynb) | | 45 s |
+| a grid of models in parallel | [3_parameter_study.ipynb](examples/3_parameter_study.ipynb) | | 30 s |
+
+Composite grains (effective-medium mixing) and SED fitting are in Sect. 16.7 and 16.13 of the
+manual.
+
+<table>
+<tr>
+<td width="33%"><img src="docs/images/recipe_eccentric.png" alt="Eccentric ring recipe"><br><sub>eccentric ring: flux against azimuth at 24 and 870 µm</sub></td>
+<td width="33%"><img src="docs/images/recipe_polarisation.png" alt="Polarisation recipe"><br><sub>observed Q_φ and degree of polarisation</sub></td>
+<td width="33%"><img src="docs/images/recipe_dhs.png" alt="Hollow spheres recipe"><br><sub>compact against hollow spheres</sub></td>
+</tr>
+<tr>
+<td><img src="docs/images/recipe_forsterite.png" alt="Forsterite recipe"><br><sub>69 µm forsterite band at the grain temperature</sub></td>
+<td><img src="docs/images/recipe_sublimation.png" alt="Sublimation recipe"><br><sub>sublimation radius against grain size</sub></td>
+<td><img src="docs/images/recipe_clump.png" alt="User density recipe"><br><sub>a ring with a clump, 0.3″ beam</sub></td>
+</tr>
+</table>
+
 ## The command-line program
 
 ```bash
@@ -292,9 +331,7 @@ of a model, and `dms.Model.from_file("model.nml")` reads one.
 
 ## Examples
 
-Chapter 16 of the manual ([docs/manual/dms_manual.pdf](docs/manual/dms_manual.pdf)) is a cookbook: one
-recipe per task, with the files, the run time, the input that matters, the result and a figure.
-All recipes run from the repository root, e.g. `python3 examples/recipes/eccentric_ring.py`.
+All example files; the recipes are listed in the [cookbook](#cookbook-one-recipe-per-task).
 
 | file | what it shows |
 |---|---|
@@ -311,7 +348,7 @@ All recipes run from the repository root, e.g. `python3 examples/recipes/eccentr
 | [examples/sublimation_ice.nml](examples/sublimation_ice.nml) | ice–silicate grains that lose their ice inside the sublimation radius |
 | [examples/photosputtering_ice.nml](examples/photosputtering_ice.nml) | the same with photosputtering (release orbits, collisions and P-R drag): the ice-loss radius of every grain size in the summary |
 | [examples/clump_user_density.nml](examples/clump_user_density.nml) | a user-defined density: a ring with a clump |
-| [examples/recipes/](examples/recipes/) | short scripts, one per task (ring from a file, eccentric ring, observed polarisation, own density law, hollow spheres, temperature-dependent forsterite, sublimation); each prints its numbers and writes a figure |
+| [examples/recipes/](examples/recipes/) | the cookbook recipes: a notebook and a script for each (ring from a file, eccentric ring, observed polarisation, own density law, hollow spheres, temperature-dependent forsterite, sublimation) |
 
 ## Features
 

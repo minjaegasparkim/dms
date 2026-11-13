@@ -43,3 +43,6 @@ docs/manual/cover/out/
 parameter_study/
 .ipynb_checkpoints/
 data/optical_constants/mixtures/
+docs/manual/*.idx
+docs/manual/*.ind
+docs/manual/*.ilg
